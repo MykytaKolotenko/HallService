@@ -1,0 +1,6 @@
+@Hall_rent_HostAddress = http://localhost:5226
+
+GET {{Hall_rent_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
