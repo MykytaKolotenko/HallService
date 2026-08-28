@@ -5,7 +5,6 @@ using Hall_rent.Exceptions;
 using Hall_rent.Helpers;
 using Hall_rent.Repository.Hall;
 using Hall_rent.Repository.Interfaces;
-using Hall_rent.Request;
 using Hall_rent.Response;
 
 namespace Hall_rent.Service;
@@ -32,9 +31,9 @@ public class HallService : IHallService
         _logger = logger;
     }
 
-    public async Task<Guid> AddHall(HallCreateRequest hall)
+    public async Task<Guid> AddHall(HallCreateDto hall)
     {
-        HallEntity hallEntity = new HallEntity(hall.Persons, hall.Price, hall.Favors);
+        HallEntity hallEntity = new HallEntity(hall.Persons, hall.Price, hall.Favors, hall.Name);
 
         await _hallRepository.AddAsync(hallEntity);
         await _hallUnitOfWork.SaveChangesAsync();

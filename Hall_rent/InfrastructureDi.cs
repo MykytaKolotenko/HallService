@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hall_rent;
 
-public static class InfrastructureDI
+public static class InfrastructureDi
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -22,13 +22,17 @@ public static class InfrastructureDI
         services.AddScoped<IHallService, HallService>();
         services.AddScoped<IFavorService, FavorService>();
 
+        // ↓ вот этого не хватало — регистрируем сами классы-обработчики
+        services.AddScoped<SerializationConflictHandler>();
+        services.AddScoped<AppExceptionHandler>();
+        services.AddScoped<FallbackExceptionHandler>();
+
         services.AddScoped<ExceptionDispatcher>(sp => new ExceptionDispatcher(new IExceptionHandler[]
         {
             sp.GetRequiredService<SerializationConflictHandler>(),
             sp.GetRequiredService<AppExceptionHandler>(),
             sp.GetRequiredService<FallbackExceptionHandler>(),
         }));
-
 
         return services;
     }

@@ -20,9 +20,9 @@ public class HallController : ControllerBase
     [HttpPost(Name = "AddHall")]
     public async Task<ActionResult<Guid>> CreateHall([FromBody] HallCreateRequest request)
     {
-        Guid id = await _hallService.AddHall(request);
+        Guid id = await _hallService.AddHall(new HallCreateDto(request.Name, request.Price, request.Persons, request.Favors));
 
-        return CreatedAtAction(nameof(CreateHall), new { id }, id);
+        return CreatedAtAction(nameof(CreateHall), new { id });
     }
 
     [HttpPatch("{id}", Name = "UpdateHall")]
