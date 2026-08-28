@@ -4,7 +4,7 @@ namespace Hall_rent.Repository.Interfaces;
 
 public interface IHallUnitOfWork
 {
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     public Task<T> RunInTransactionAsync<T>(
         IsolationLevel isolationLevel,

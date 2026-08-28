@@ -2,9 +2,9 @@ namespace Hall_rent.Dto;
 
 public struct HallSearchDto
 {
-    public DateTime StartAt;
-    public DateTime EndAt;
-    public int Persons;
+    public DateTime StartAt { get; private set; }
+    public DateTime EndAt { get; private set; }
+    public int Persons { get; private set; }
 
     public HallSearchDto(DateTime startAt, DateTime endAt, int persons)
     {

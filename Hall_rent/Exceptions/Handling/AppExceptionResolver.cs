@@ -1,6 +1,6 @@
 namespace Hall_rent.Exceptions.Handling;
 
-public class AppExceptionHandler : IExceptionHandler
+public class AppExceptionResolver : IExceptionResolver
 {
     public bool CanHandle(Exception ex) => ex is AppException;
 

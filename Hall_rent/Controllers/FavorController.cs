@@ -1,7 +1,9 @@
+using FluentValidation;
 using Hall_rent.Dto;
 using Hall_rent.Request;
 using Hall_rent.Response;
 using Hall_rent.Service;
+using Hall_rent.Validation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hall_rent.Controllers;
@@ -10,11 +12,19 @@ namespace Hall_rent.Controllers;
 [Route("[controller]")]
 public class FavorController : ControllerBase
 {
+    private readonly IValidator<FavorCreateRequest> _createValidator;
     private readonly IFavorService _favorService;
+    private readonly IValidator<FavorUpdateRequest> _updateValidator;
 
-    public FavorController(IFavorService favorService)
+    public FavorController(
+        IFavorService favorService,
+        IValidator<FavorUpdateRequest> updateValidator,
+        IValidator<FavorCreateRequest> createValidator
+    )
     {
         _favorService = favorService;
+        _updateValidator = updateValidator;
+        _createValidator = createValidator;
     }
 
     [HttpGet(Name = "GetFavours")]
@@ -28,6 +38,7 @@ public class FavorController : ControllerBase
     [HttpPost(Name = "CreateFavour")]
     public async Task<ActionResult<Guid>> CreateFavours([FromBody] FavorCreateRequest request)
     {
+        await ValidatorUtils.Validate(_createValidator, request);
         Guid id = await _favorService.AddFavour(request);
 
         return CreatedAtAction(nameof(CreateFavours), new { id }, id);
@@ -36,8 +47,8 @@ public class FavorController : ControllerBase
     [HttpPatch("{id}", Name = "UpdateFavour")]
     public async Task<IActionResult> UpdateFavours(Guid id, [FromBody] FavorUpdateRequest request)
     {
-        var updateFavourData = new UpdateFavorDto(id, request.Name, request.Price);
-        await _favorService.UpdateFavour(updateFavourData);
+        await ValidatorUtils.Validate(_updateValidator, request);
+        await _favorService.UpdateFavour(new UpdateFavorDto(id, request.Name, request.Price));
 
         return Ok();
     }

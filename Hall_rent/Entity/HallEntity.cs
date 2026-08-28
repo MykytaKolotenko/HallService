@@ -6,7 +6,7 @@ public class HallEntity
     {
     }
 
-    public HallEntity(int persons, decimal price, List<Guid> favors, string name)
+    public HallEntity(int persons, decimal price, List<Guid>? favors, string name)
     {
         Persons = persons;
         Price = price;

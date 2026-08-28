@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Hall_rent.Exceptions.Handling;
 
-public class FallbackExceptionHandler : IExceptionHandler
+public class FallbackExceptionResolver : IExceptionResolver
 {
     public bool CanHandle(Exception ex) => true;
 

@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Name).HasMaxLength(255);
+            builder.HasIndex(x => x.Name).IsUnique();
             builder.Property(x => x.Price).HasPrecision(18, 2);
         });
 

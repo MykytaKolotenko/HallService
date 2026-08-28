@@ -1,7 +1,9 @@
+using FluentValidation;
 using Hall_rent.Dto;
 using Hall_rent.Request;
 using Hall_rent.Response;
 using Hall_rent.Service;
+using Hall_rent.Validation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hall_rent.Controllers;
@@ -10,16 +12,31 @@ namespace Hall_rent.Controllers;
 [Route("[controller]")]
 public class HallController : ControllerBase
 {
+    private readonly IValidator<HallBookRequest> _bookValidator;
+    private readonly IValidator<HallCreateRequest> _createValidator;
     private readonly IHallService _hallService;
+    private readonly IValidator<HallSearchRequest> _searchValidator;
+    private readonly IValidator<HallUpdateRequest> _updateValidator;
 
-    public HallController(IHallService hallService)
+    public HallController(
+        IHallService hallService,
+        IValidator<HallCreateRequest> createValidator,
+        IValidator<HallSearchRequest> searchValidator,
+        IValidator<HallUpdateRequest> updateValidator,
+        IValidator<HallBookRequest> bookValidator
+    )
     {
         _hallService = hallService;
+        _createValidator = createValidator;
+        _searchValidator = searchValidator;
+        _updateValidator = updateValidator;
+        _bookValidator = bookValidator;
     }
 
     [HttpPost(Name = "AddHall")]
     public async Task<ActionResult<Guid>> CreateHall([FromBody] HallCreateRequest request)
     {
+        await ValidatorUtils.Validate(_createValidator, request);
         Guid id = await _hallService.AddHall(new HallCreateDto(request.Name, request.Price, request.Persons, request.Favors));
 
         return CreatedAtAction(nameof(CreateHall), new { id });
@@ -28,8 +45,13 @@ public class HallController : ControllerBase
     [HttpPatch("{id}", Name = "UpdateHall")]
     public async Task<ActionResult<Guid>> PatchHall(Guid id, [FromBody] HallUpdateRequest request)
     {
-        var updateHallData = new UpdateHallDto(id, request.Price, request.Persons, request.Favors);
-        await _hallService.UpdateHall(updateHallData);
+        await ValidatorUtils.Validate(_updateValidator, request);
+        await _hallService.UpdateHall(new UpdateHallDto(
+            id,
+            request.Price,
+            request.Persons,
+            request.Favors)
+        );
 
         return Ok();
     }
@@ -45,8 +67,15 @@ public class HallController : ControllerBase
     [HttpPost("{hallId}/book", Name = "BookHall")]
     public async Task<ActionResult<HallBookResponse>> BookHall(Guid hallId, [FromBody] HallBookRequest request)
     {
-        var bookHall = new BookHallDto(request.StartAt, request.EndAt, request.Favors, hallId);
-        var bookingResponse = await _hallService.BookHall(bookHall);
+        await ValidatorUtils.Validate(_bookValidator, request);
+
+        var bookingResponse = await _hallService.BookHall(new BookHallDto(
+            request.StartAt,
+            request.EndAt,
+            request.Favors,
+            hallId,
+            request.Persons)
+        );
 
         return CreatedAtAction(nameof(BookHall), bookingResponse);
     }
@@ -54,8 +83,13 @@ public class HallController : ControllerBase
     [HttpGet("search")]
     public async Task<ActionResult<List<Guid>>> SearchHalls([FromQuery] HallSearchRequest request)
     {
-        var searchData = new HallSearchDto(request.StartAt, request.EndAt, request.Persons);
-        var halls = await _hallService.FindAvailableHallIdsAsync(searchData);
+        await ValidatorUtils.Validate(_searchValidator, request);
+
+        var halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto(
+            request.StartAt,
+            request.EndAt,
+            request.Persons)
+        );
 
         return Ok(halls);
     }

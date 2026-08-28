@@ -1,5 +1,6 @@
 using System.Data;
 using Hall_rent.Context;
+using Hall_rent.Exceptions;
 using Hall_rent.Exceptions.Handling;
 using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +21,16 @@ public class HallUnitOfWork : IHallUnitOfWork
         _exceptionDispatcher = exceptionDispatcher;
     }
 
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (SqlErrorClassifier.IsSerializationFailure(ex))
+        {
+            throw new BookingConflictException(Guid.Empty, ex);
+        }
     }
 
     public async Task<T> RunInTransactionAsync<T>(

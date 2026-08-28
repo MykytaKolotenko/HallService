@@ -6,6 +6,7 @@ using Hall_rent.Helpers;
 using Hall_rent.Repository.Hall;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Response;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hall_rent.Service;
 
@@ -36,7 +37,16 @@ public class HallService : IHallService
         HallEntity hallEntity = new HallEntity(hall.Persons, hall.Price, hall.Favors, hall.Name);
 
         await _hallRepository.AddAsync(hallEntity);
-        await _hallUnitOfWork.SaveChangesAsync();
+
+        try
+        {
+            await _hallUnitOfWork.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (SqlErrorClassifier.IsUniqueViolation(ex))
+        {
+            throw new HallNameAlreadyExistsException(hallEntity.Name, ex);
+            // throw new Exception("TEST_CUSTOM_TO_GLOBAL", ex);
+        }
 
         return hallEntity.Id;
     }

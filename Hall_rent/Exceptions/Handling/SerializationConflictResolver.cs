@@ -5,7 +5,7 @@ namespace Hall_rent.Exceptions.Handling;
 
 // Единственный обработчик, который не наследник AppException —
 // ловит сырую SqlException/DbUpdateException и оборачивает в ConcurrencyConflictException
-public class SerializationConflictHandler : IExceptionHandler
+public class SerializationConflictResolver : IExceptionResolver
 {
     public bool CanHandle(Exception ex)
     {
