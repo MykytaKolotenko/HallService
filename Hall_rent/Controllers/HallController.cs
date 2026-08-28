@@ -1,5 +1,6 @@
 using Hall_rent.Dto;
 using Hall_rent.Request;
+using Hall_rent.Response;
 using Hall_rent.Service;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,9 @@ namespace Hall_rent.Controllers;
 [Route("[controller]")]
 public class HallController : ControllerBase
 {
-    private readonly HallService _hallService;
+    private readonly IHallService _hallService;
 
-    public HallController(HallService hallService)
+    public HallController(IHallService hallService)
     {
         _hallService = hallService;
     }
@@ -24,7 +25,7 @@ public class HallController : ControllerBase
         return CreatedAtAction(nameof(CreateHall), new { id }, id);
     }
 
-    [HttpPatch("{id}")]
+    [HttpPatch("{id}", Name = "UpdateHall")]
     public async Task<ActionResult<Guid>> PatchHall(Guid id, [FromBody] HallUpdateRequest request)
     {
         var updateHallData = new UpdateHallDto(id, request.Price, request.Persons, request.Favors);
@@ -33,21 +34,21 @@ public class HallController : ControllerBase
         return Ok();
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id}", Name = "DeleteHall")]
     public async Task<IActionResult> DeleteHall(Guid id)
     {
         await _hallService.DeleteHall(id);
 
-        return NoContent();
+        return Ok();
     }
 
-    [HttpPost("{hallId}/book")]
-    public async Task<ActionResult<Guid>> BookHall(Guid hallId, [FromBody] HallBookRequest request)
+    [HttpPost("{hallId}/book", Name = "BookHall")]
+    public async Task<ActionResult<HallBookResponse>> BookHall(Guid hallId, [FromBody] HallBookRequest request)
     {
         var bookHall = new BookHallDto(request.StartAt, request.EndAt, request.Favors, hallId);
-        var bookingId = await _hallService.BookHall(bookHall);
+        var bookingResponse = await _hallService.BookHall(bookHall);
 
-        return CreatedAtAction(nameof(BookHall), new { id = bookingId }, bookingId);
+        return CreatedAtAction(nameof(BookHall), bookingResponse);
     }
 
     [HttpGet("search")]

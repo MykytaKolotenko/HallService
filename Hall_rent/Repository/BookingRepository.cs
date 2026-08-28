@@ -1,3 +1,4 @@
+using Hall_rent.Context;
 using Hall_rent.Entity;
 using Hall_rent.Repository.Hall;
 using Microsoft.EntityFrameworkCore;
@@ -11,5 +12,10 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
     public async Task AddAsync(HallBookingEntity booking)
     {
         await _dbSet.AddAsync(booking);
+    }
+
+    public async Task<bool> IsHallAvailableAsync(Guid hallId, DateTime startAt, DateTime endAt)
+    {
+        return !await _dbSet.AnyAsync(b => b.HallId == hallId && b.StartAt < endAt && b.EndAt > startAt);
     }
 }

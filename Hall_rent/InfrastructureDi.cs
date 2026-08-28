@@ -1,5 +1,8 @@
+using Hall_rent.Context;
+using Hall_rent.Exceptions.Handling;
 using Hall_rent.Repository;
 using Hall_rent.Repository.Hall;
+using Hall_rent.Repository.Interfaces;
 using Hall_rent.Service;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +17,18 @@ public static class InfrastructureDI
 
         services.AddScoped<IHallRepository, HallRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IFavorRepository, FavorRepository>();
         services.AddScoped<IHallUnitOfWork, HallUnitOfWork>();
-        services.AddScoped<HallService>();
+        services.AddScoped<IHallService, HallService>();
+        services.AddScoped<IFavorService, FavorService>();
+
+        services.AddScoped<ExceptionDispatcher>(sp => new ExceptionDispatcher(new IExceptionHandler[]
+        {
+            sp.GetRequiredService<SerializationConflictHandler>(),
+            sp.GetRequiredService<AppExceptionHandler>(),
+            sp.GetRequiredService<FallbackExceptionHandler>(),
+        }));
+
 
         return services;
     }

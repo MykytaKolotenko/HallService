@@ -1,6 +1,13 @@
-namespace Hall_rent.Repository.Hall;
+using System.Data;
+
+namespace Hall_rent.Repository.Interfaces;
 
 public interface IHallUnitOfWork
 {
-    Task<int> SaveChangesAsync();
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    public Task<T> RunInTransactionAsync<T>(
+        IsolationLevel isolationLevel,
+        Func<Task<T>> operation,
+        string operationName);
 }
