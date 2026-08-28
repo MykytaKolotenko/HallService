@@ -45,7 +45,6 @@ public class HallService : IHallService
         catch (DbUpdateException ex) when (SqlErrorClassifier.IsUniqueViolation(ex))
         {
             throw new HallNameAlreadyExistsException(hallEntity.Name, ex);
-            // throw new Exception("TEST_CUSTOM_TO_GLOBAL", ex);
         }
 
         return hallEntity.Id;
