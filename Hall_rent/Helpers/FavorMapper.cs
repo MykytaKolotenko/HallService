@@ -19,20 +19,20 @@ public static class FavorMapper
     private static FavorResponse ToResponse(FavorEntity favor)
     {
         return new FavorResponse
-        (
-            favor.Id,
-            favor.Name,
-            favor.Price
-        );
+        {
+            Id = favor.Id,
+            Name = favor.Name,
+            Price = favor.Price
+        };
     }
 
     private static FavorDto ToDto(FavorEntity favor)
     {
         return new FavorDto
-        (
-            favor.Id,
-            favor.Name,
-            favor.Price
-        );
+        {
+            Id = favor.Id,
+            Name = favor.Name,
+            Price = favor.Price
+        };
     }
 }

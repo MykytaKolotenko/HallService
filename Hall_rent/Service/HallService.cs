@@ -34,7 +34,13 @@ public class HallService : IHallService
 
     public async Task<Guid> AddHall(HallCreateDto hall)
     {
-        HallEntity hallEntity = new HallEntity(hall.Persons, hall.Price, hall.Favors, hall.Name);
+        HallEntity hallEntity = new HallEntity
+        {
+            Persons = hall.Persons,
+            Price = hall.Price,
+            Favors = hall.Favors,
+            Name = hall.Name
+        };
 
         await _hallRepository.AddAsync(hallEntity);
 

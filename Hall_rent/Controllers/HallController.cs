@@ -37,7 +37,14 @@ public class HallController : ControllerBase
     public async Task<ActionResult<Guid>> CreateHall([FromBody] HallCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        Guid id = await _hallService.AddHall(new HallCreateDto(request.Name, request.Price, request.Persons, request.Favors));
+        Guid id = await _hallService.AddHall(new HallCreateDto
+            {
+                Name = request.Name,
+                Price = request.Price,
+                Persons = request.Persons,
+                Favors = request.Favors
+            }
+        );
 
         return CreatedAtAction(nameof(CreateHall), new { id });
     }
@@ -46,11 +53,13 @@ public class HallController : ControllerBase
     public async Task<ActionResult<Guid>> PatchHall(Guid id, [FromBody] HallUpdateRequest request)
     {
         await ValidatorUtils.Validate(_updateValidator, request);
-        await _hallService.UpdateHall(new UpdateHallDto(
-            id,
-            request.Price,
-            request.Persons,
-            request.Favors)
+        await _hallService.UpdateHall(new UpdateHallDto
+            {
+                Id = id,
+                Price = request.Price,
+                Persons = request.Persons,
+                Favors = request.Favors
+            }
         );
 
         return Ok();
@@ -69,12 +78,14 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_bookValidator, request);
 
-        var bookingResponse = await _hallService.BookHall(new BookHallDto(
-            request.StartAt,
-            request.EndAt,
-            request.Favors,
-            hallId,
-            request.Persons)
+        var bookingResponse = await _hallService.BookHall(new BookHallDto
+            {
+                StartAt = request.StartAt,
+                EndAt = request.EndAt,
+                Favors = request.Favors,
+                HallId = hallId,
+                Persons = request.Persons
+            }
         );
 
         return CreatedAtAction(nameof(BookHall), bookingResponse);
@@ -85,10 +96,12 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_searchValidator, request);
 
-        var halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto(
-            request.StartAt,
-            request.EndAt,
-            request.Persons)
+        var halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto
+            {
+                StartAt = request.StartAt,
+                EndAt = request.EndAt,
+                Persons = request.Persons
+            }
         );
 
         return Ok(halls);

@@ -28,7 +28,11 @@ public class FavorService : IFavorService
 
     public async Task<Guid> AddFavour(FavorCreateRequest request)
     {
-        FavorEntity favor = new FavorEntity(request.Name, request.Price);
+        FavorEntity favor = new FavorEntity
+        {
+            Name = request.Name,
+            Price = request.Price
+        };
 
         await _favorRepository.AddAsync(favor);
         await _hallUnitOfWork.SaveChangesAsync();

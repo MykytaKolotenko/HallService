@@ -48,7 +48,12 @@ public class FavorController : ControllerBase
     public async Task<IActionResult> UpdateFavours(Guid id, [FromBody] FavorUpdateRequest request)
     {
         await ValidatorUtils.Validate(_updateValidator, request);
-        await _favorService.UpdateFavour(new UpdateFavorDto(id, request.Name, request.Price));
+        await _favorService.UpdateFavour(new UpdateFavorDto
+        {
+            Id = id,
+            Name = request.Name,
+            Price = request.Price
+        });
 
         return Ok();
     }
