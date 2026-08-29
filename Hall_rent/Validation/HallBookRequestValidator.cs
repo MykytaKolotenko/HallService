@@ -8,8 +8,8 @@ public class HallBookRequestValidator : AbstractValidator<HallBookRequest>
     public HallBookRequestValidator()
     {
         RuleFor(x => x.StartAt)
-            .NotEmpty()
-            .WithMessage("StartAt is required.");
+            .GreaterThan(DateTime.UtcNow)
+            .WithMessage("StartAt must be in the future.");
 
         RuleFor(x => x.EndAt)
             .NotEmpty()
@@ -20,9 +20,9 @@ public class HallBookRequestValidator : AbstractValidator<HallBookRequest>
             .GreaterThan(0)
             .WithMessage("Persons must be greater than 0.");
 
-        RuleForEach(x => x.Favors ?? new List<Guid> { })
+        RuleForEach(x => x.Favors)
             .NotEqual(Guid.Empty)
             .WithMessage("Each favor id must be a valid non-empty GUID.")
-            .When(x => x.Favors.Count > 0);
+            .When(x => x.Favors is { Count: > 0 });
     }
 }

@@ -36,5 +36,24 @@ public class AppDbContext : DbContext
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Price).HasPrecision(18, 2);
         });
+
+        modelBuilder.Entity<HallFavorEntity>(builder =>
+        {
+            builder.HasKey(x => new
+            {
+                x.HallId,
+                x.FavorId
+            });
+
+            builder
+                .HasOne(x => x.Hall)
+                .WithMany(x => x.Favours)
+                .HasForeignKey(x => x.HallId);
+
+            builder
+                .HasOne(x => x.Favor)
+                .WithMany(x => x.Halls)
+                .HasForeignKey(x => x.FavorId);
+        });
     }
 }

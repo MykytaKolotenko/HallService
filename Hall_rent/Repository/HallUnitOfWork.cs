@@ -12,24 +12,26 @@ public class HallUnitOfWork : IHallUnitOfWork
 {
     private readonly AppDbContext _dbContext;
     private readonly ExceptionDispatcher _exceptionDispatcher;
-    private readonly ILogger<HallUnitOfWork> _logger;
 
     public HallUnitOfWork(AppDbContext dbContext, ILogger<HallUnitOfWork> logger, ExceptionDispatcher exceptionDispatcher)
     {
         _dbContext = dbContext;
-        _logger = logger;
         _exceptionDispatcher = exceptionDispatcher;
     }
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(
+        CancellationToken cancellationToken = default)
     {
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (SqlErrorClassifier.IsSerializationFailure(ex))
+        catch (DbUpdateException ex)
+            when (SqlErrorClassifier.IsUniqueViolation(ex))
         {
-            throw new BookingConflictException(Guid.Empty, ex);
+            throw new UniqueConstraintException(
+                "Halls.Name",
+                ex);
         }
     }
 
@@ -66,7 +68,7 @@ public class HallUnitOfWork : IHallUnitOfWork
         }
         catch (Exception rollbackEx)
         {
-            _logger.LogError(rollbackEx, "Rollback failed");
+            throw new InvalidOperationException("Rollback failed", rollbackEx);
         }
     }
 }

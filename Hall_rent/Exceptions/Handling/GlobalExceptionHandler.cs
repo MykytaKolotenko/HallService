@@ -4,11 +4,15 @@ namespace Hall_rent.Exceptions.Handling;
 
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ExceptionDispatcher _dispatcher;
+    private readonly ILogger<GlobalExceptionHandler> _logger;
 
-    public GlobalExceptionHandler(IServiceScopeFactory scopeFactory)
+    public GlobalExceptionHandler(
+        ExceptionDispatcher dispatcher,
+        ILogger<GlobalExceptionHandler> logger)
     {
-        _scopeFactory = scopeFactory;
+        _dispatcher = dispatcher;
+        _logger = logger;
     }
 
     public async ValueTask<bool> TryHandleAsync(
@@ -16,21 +20,34 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<ExceptionDispatcher>();
+        var resolution = _dispatcher.Resolve(
+            exception,
+            httpContext.Request.Path);
 
-        var resolution = dispatcher.Resolve(exception, httpContext.Request.Path);
+        _logger.Log(
+            resolution.LogLevel,
+            exception,
+            "Unhandled application exception for {Path}",
+            httpContext.Request.Path);
 
         httpContext.Response.StatusCode = (int)resolution.StatusCode;
-        httpContext.Response.ContentType = "application/json";
 
-        await httpContext.Response.WriteAsJsonAsync(new
+        var response = new
         {
             title = resolution.Title,
             status = (int)resolution.StatusCode,
-            errors = new[] { resolution.Exception.Message },
+            errors = new[]
+            {
+                resolution.Exception.Message
+            },
             traceId = httpContext.TraceIdentifier
-        }, cancellationToken);
+        };
+
+        await httpContext.Response.WriteAsJsonAsync(
+            response,
+            options: null,
+            contentType: "application/problem+json",
+            cancellationToken: cancellationToken);
 
         return true;
     }

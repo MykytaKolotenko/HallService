@@ -8,8 +8,10 @@ public class HallCreateRequestValidator : AbstractValidator<HallCreateRequest>
     public HallCreateRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Hall name is required.")
-            .MaximumLength(200).WithMessage("Hall name must not exceed 200 characters.");
+            .NotEmpty()
+            .WithMessage("Hall name is required.")
+            .MaximumLength(200)
+            .WithMessage("Hall name must not exceed 200 characters.");
 
         RuleFor(x => x.Persons)
             .GreaterThan(0)

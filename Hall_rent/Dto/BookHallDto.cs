@@ -1,6 +1,6 @@
 namespace Hall_rent.Dto;
 
-public struct BookHallDto
+public record BookHallDto
 {
     public Guid HallId { get; set; }
     public List<Guid> Favors { get; set; }

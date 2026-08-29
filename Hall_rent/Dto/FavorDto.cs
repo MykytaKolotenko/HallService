@@ -1,6 +1,6 @@
 namespace Hall_rent.Dto;
 
-public struct FavorDto
+public record FavorDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

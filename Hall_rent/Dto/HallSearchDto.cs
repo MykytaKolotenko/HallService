@@ -1,6 +1,6 @@
 namespace Hall_rent.Dto;
 
-public struct HallSearchDto
+public record HallSearchDto
 {
     public DateTime StartAt { get; set; }
     public DateTime EndAt { get; set; }

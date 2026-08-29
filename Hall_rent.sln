@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hall_rent", "Hall_rent\Hall_rent.csproj", "{FA3BA407-9E74-4455-876A-3CA99661D9AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hall_rent.Tests", "Hall_rent.Tests\Hall_rent.Tests.csproj", "{D4C8E3C0-4D1E-4AC7-9E6D-6B2B5F1D9F40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,6 +14,10 @@ Global
 		{FA3BA407-9E74-4455-876A-3CA99661D9AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA3BA407-9E74-4455-876A-3CA99661D9AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA3BA407-9E74-4455-876A-3CA99661D9AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4C8E3C0-4D1E-4AC7-9E6D-6B2B5F1D9F40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4C8E3C0-4D1E-4AC7-9E6D-6B2B5F1D9F40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4C8E3C0-4D1E-4AC7-9E6D-6B2B5F1D9F40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4C8E3C0-4D1E-4AC7-9E6D-6B2B5F1D9F40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

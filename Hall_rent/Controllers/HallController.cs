@@ -13,6 +13,7 @@ namespace Hall_rent.Controllers;
 public class HallController : ControllerBase
 {
     private readonly IValidator<HallBookRequest> _bookValidator;
+    private readonly IBookingService _bookingService;
     private readonly IValidator<HallCreateRequest> _createValidator;
     private readonly IHallService _hallService;
     private readonly IValidator<HallSearchRequest> _searchValidator;
@@ -20,6 +21,7 @@ public class HallController : ControllerBase
 
     public HallController(
         IHallService hallService,
+        IBookingService bookingService,
         IValidator<HallCreateRequest> createValidator,
         IValidator<HallSearchRequest> searchValidator,
         IValidator<HallUpdateRequest> updateValidator,
@@ -27,6 +29,7 @@ public class HallController : ControllerBase
     )
     {
         _hallService = hallService;
+        _bookingService = bookingService;
         _createValidator = createValidator;
         _searchValidator = searchValidator;
         _updateValidator = updateValidator;
@@ -46,7 +49,7 @@ public class HallController : ControllerBase
             }
         );
 
-        return CreatedAtAction(nameof(CreateHall), new { id });
+        return Ok(new { id });
     }
 
     [HttpPatch("{id}", Name = "UpdateHall")]
@@ -78,7 +81,7 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_bookValidator, request);
 
-        var bookingResponse = await _hallService.BookHall(new BookHallDto
+        var bookingResponse = await _bookingService.BookAsync(new BookHallDto
             {
                 StartAt = request.StartAt,
                 EndAt = request.EndAt,
@@ -88,7 +91,7 @@ public class HallController : ControllerBase
             }
         );
 
-        return CreatedAtAction(nameof(BookHall), bookingResponse);
+        return Ok(bookingResponse);
     }
 
     [HttpGet("search")]

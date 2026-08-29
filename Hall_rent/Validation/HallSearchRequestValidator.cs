@@ -3,14 +3,14 @@ using Hall_rent.Request;
 
 public class HallSearchRequestValidator : AbstractValidator<HallSearchRequest>
 {
-    public HallSearchRequestValidator()
+    public HallSearchRequestValidator(IClock clock)
     {
         RuleFor(x => x.StartAt)
             .LessThan(x => x.EndAt)
             .WithMessage("StartAt must be earlier than EndAt.");
 
         RuleFor(x => x.EndAt)
-            .GreaterThan(DateTime.UtcNow)
+            .GreaterThan(clock.UtcNow)
             .WithMessage("End date must be in the future.");
 
         RuleFor(x => x.Persons)

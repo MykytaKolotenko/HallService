@@ -1,6 +1,6 @@
 namespace Hall_rent.Dto;
 
-public struct UpdateHallDto
+public record UpdateHallDto
 {
     public Guid Id { get; set; }
     public decimal Price { get; set; }

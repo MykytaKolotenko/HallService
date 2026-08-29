@@ -1,5 +1,4 @@
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Hall_rent.Context;
 using Hall_rent.Exceptions.Handling;
 using Hall_rent.Repository;
@@ -30,13 +29,13 @@ public static class InfrastructureDi
 
     private static void AddValidation(this IServiceCollection services)
     {
+        services.AddValidatorsFromAssemblyContaining<HallCreateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<FavorUpdateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<FavorCreateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallCreateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallUpdateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallBookRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallSearchRequestValidator>();
-        services.AddFluentValidationAutoValidation();
     }
 
     private static void AddRepository(this IServiceCollection services)
@@ -50,6 +49,8 @@ public static class InfrastructureDi
     {
         services.AddScoped<IHallService, HallService>();
         services.AddScoped<IFavorService, FavorService>();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IClock, SystemClock>();
     }
 
     private static void AddExceptions(this IServiceCollection services)
