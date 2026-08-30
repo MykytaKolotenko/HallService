@@ -1,6 +1,6 @@
 using Hall_rent.Context;
 using Hall_rent.Entity;
-using Hall_rent.Repository.Hall;
+using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hall_rent.Repository;

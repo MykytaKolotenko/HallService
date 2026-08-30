@@ -1,3 +1,5 @@
+using Hall_rent.Helpers;
+
 public sealed class FixedClock : IClock
 {
     public FixedClock(DateTime utcNow)

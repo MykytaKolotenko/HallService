@@ -1,8 +1,8 @@
 using FluentValidation;
 using Hall_rent.Context;
 using Hall_rent.Exceptions.Handling;
+using Hall_rent.Helpers;
 using Hall_rent.Repository;
-using Hall_rent.Repository.Hall;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Service;
 using Hall_rent.Validation;
@@ -43,6 +43,8 @@ public static class InfrastructureDi
         services.AddScoped<IHallRepository, HallRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IFavorRepository, FavorRepository>();
+
+        services.AddScoped<IFavorResolver, FavorResolver>();
     }
 
     private static void AddServices(this IServiceCollection services)
@@ -57,7 +59,7 @@ public static class InfrastructureDi
     {
         services.AddProblemDetails();
 
-        services.AddSingleton<ValidationExceptionResolver>(); // ← проверьте, что эта строка есть
+        services.AddSingleton<ValidationExceptionResolver>();
         services.AddSingleton<SerializationConflictResolver>();
         services.AddSingleton<UniqueViolationResolver>();
         services.AddSingleton<AppExceptionResolver>();
@@ -68,7 +70,7 @@ public static class InfrastructureDi
             sp.GetRequiredService<SerializationConflictResolver>(),
             sp.GetRequiredService<UniqueViolationResolver>(),
             sp.GetRequiredService<AppExceptionResolver>(),
-            sp.GetRequiredService<FallbackExceptionResolver>() // обязательно последним
+            sp.GetRequiredService<FallbackExceptionResolver>()
         ]));
     }
 }

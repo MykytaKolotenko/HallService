@@ -39,6 +39,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<HallFavorEntity>(builder =>
         {
+            builder.ToTable("HallFavorLinks");
+
             builder.HasKey(x => new
             {
                 x.HallId,
@@ -47,7 +49,7 @@ public class AppDbContext : DbContext
 
             builder
                 .HasOne(x => x.Hall)
-                .WithMany(x => x.FavorsEntity)
+                .WithMany(x => x.Favors)
                 .HasForeignKey(x => x.HallId);
 
             builder

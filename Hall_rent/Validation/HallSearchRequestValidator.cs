@@ -1,4 +1,5 @@
 using FluentValidation;
+using Hall_rent.Helpers;
 using Hall_rent.Request;
 
 public class HallSearchRequestValidator : AbstractValidator<HallSearchRequest>

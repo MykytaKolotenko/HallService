@@ -1,36 +1,37 @@
 using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
-using Hall_rent.Repository.Hall;
+using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
 
 namespace Hall_rent.Service;
 
 public class HallService : IHallService
 {
-    // private readonly IFavorRepository _favorRepository;
+    private readonly IFavorResolver _favorResolver;
     private readonly IHallRepository _hallRepository;
     private readonly IHallUnitOfWork _hallUnitOfWork;
 
     public HallService(
-        IHallRepository hallHallRepository,
-        IHallUnitOfWork hallHallUnitOfWork
-        // IFavorRepository favorRepository
-    )
+        IHallRepository hallRepository,
+        IHallUnitOfWork hallUnitOfWork,
+        IFavorResolver favorResolver)
     {
-        _hallRepository = hallHallRepository;
-        _hallUnitOfWork = hallHallUnitOfWork;
-        // _favorRepository = favorRepository;
+        _hallRepository = hallRepository;
+        _hallUnitOfWork = hallUnitOfWork;
+        _favorResolver = favorResolver;
     }
 
     public async Task<Guid> AddHall(HallCreateDto hall)
     {
+        var favors = await _favorResolver.ResolveOrThrowAsync(hall.Favors);
+
         var hallEntity = new HallEntity
         {
             Persons = hall.Persons,
             Price = hall.Price,
-            Favors = hall.Favors ?? [],
-            Name = hall.Name
+            Name = hall.Name,
+            Favors = favors.Select(f => new HallFavorEntity { FavorId = f.Id }).ToList()
         };
 
         await _hallRepository.AddAsync(hallEntity);
@@ -41,9 +42,7 @@ public class HallService : IHallService
         }
         catch (UniqueConstraintException ex)
         {
-            throw new HallNameAlreadyExistsException(
-                hallEntity.Name,
-                ex);
+            throw new HallNameAlreadyExistsException(hallEntity.Name, ex);
         }
 
         return hallEntity.Id;
@@ -52,10 +51,16 @@ public class HallService : IHallService
     public async Task UpdateHall(UpdateHallDto request)
     {
         var hall = await GetHall(request.Id);
+        var favors = await _favorResolver.ResolveOrThrowAsync(request.Favors);
 
         hall.Persons = request.Persons;
         hall.Price = request.Price;
-        hall.Favors = request.Favors ?? [];
+
+        hall.Favors.Clear();
+        foreach (var favor in favors)
+        {
+            hall.Favors.Add(new HallFavorEntity { HallId = hall.Id, FavorId = favor.Id });
+        }
 
         await _hallUnitOfWork.SaveChangesAsync();
     }
@@ -63,7 +68,6 @@ public class HallService : IHallService
     public async Task DeleteHall(Guid id)
     {
         var hall = await GetHall(id);
-
         _hallRepository.Remove(hall);
         await _hallUnitOfWork.SaveChangesAsync();
     }
@@ -82,7 +86,6 @@ public class HallService : IHallService
     private async Task<HallEntity> GetHall(Guid hallId)
     {
         var hall = await _hallRepository.GetByIdAsync(hallId);
-
         return hall ?? throw new NotFoundException($"Hall {hallId} not found");
     }
 }

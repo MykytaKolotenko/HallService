@@ -1,6 +1,6 @@
 using Hall_rent.Entity;
 
-namespace Hall_rent.Repository.Hall;
+namespace Hall_rent.Repository.Interfaces;
 
 public interface IHallRepository
 {

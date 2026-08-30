@@ -1,6 +1,6 @@
 using Hall_rent.Context;
 using Hall_rent.Entity;
-using Hall_rent.Repository.Hall;
+using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hall_rent.Repository;
@@ -40,5 +40,12 @@ public class HallRepository : IHallRepository
                 b.StartAt < endAt &&
                 b.EndAt > startAt))
             .ToListAsync();
+    }
+
+    public async Task<HallEntity?> GetByIdWithFavorsAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(h => h.Favors)
+            .FirstOrDefaultAsync(x => x.Id == id);
     }
 }
