@@ -14,7 +14,13 @@ public class ExceptionDispatcher
     public ExceptionResolution Resolve(Exception ex, string context = "")
     {
         var handler = _handlers.FirstOrDefault(h => h.CanHandle(ex));
+
         return handler?.Resolve(ex, context)
-               ?? new ExceptionResolution(ex, HttpStatusCode.InternalServerError, "Internal Server Error", LogLevel.Error);
+               ?? new ExceptionResolution(
+                   ["Internal Server Error"],
+                   HttpStatusCode.InternalServerError,
+                   "Internal Server Error",
+                   LogLevel.Error,
+                   ex);
     }
 }

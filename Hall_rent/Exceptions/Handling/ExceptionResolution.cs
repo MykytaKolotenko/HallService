@@ -2,8 +2,9 @@ using System.Net;
 
 namespace Hall_rent.Exceptions.Handling;
 
-public record ExceptionResolution(
-    Exception Exception, // что пробрасывать наружу / что попадёт в лог и в detail ответа
-    HttpStatusCode StatusCode, // какой HTTP-статус вернуть клиенту (в middleware)
-    string Title, // короткое имя ошибки для problem+json ("Not Found", "Conflict" и т.п.)
-    LogLevel LogLevel); // с каким уровнем логировать (Information для ожидаемых бизнес-ошибок, Error для непредвиденных)
+public sealed record ExceptionResolution(
+    IReadOnlyList<string> Errors, // сообщения, которые пойдут в "errors" клиенту (может быть несколько — например, при валидации)
+    HttpStatusCode StatusCode, // какой HTTP-статус вернуть клиенту
+    string Title, // "title" в ответе ("ValidationError", "NotFound", "Internal Server Error" и т.п.)
+    LogLevel LogLevel, // с каким уровнем логировать
+    Exception Exception); // исходное (не обёрнутое) исключение — только для логов, клиенту не показывается

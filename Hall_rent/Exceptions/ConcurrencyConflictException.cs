@@ -1,5 +1,6 @@
 using System.Net;
-using Hall_rent.Exceptions;
+
+namespace Hall_rent.Exceptions;
 
 public class ConcurrencyConflictException : AppException
 {
