@@ -27,28 +27,28 @@ public class FavorController : ControllerBase
         _createValidator = createValidator;
     }
 
-    [HttpGet(Name = "GetFavours")]
-    public async Task<ActionResult<List<FavorResponse>>> GetFavours()
+    [HttpGet(Name = "GetFavors")]
+    public async Task<ActionResult<List<FavorResponse>>> GetFavors()
     {
-        var favours = await _favorService.GetFavours();
+        List<FavorResponse> favors = await _favorService.GetFavors();
 
-        return Ok(favours);
+        return Ok(favors);
     }
 
-    [HttpPost(Name = "CreateFavour")]
-    public async Task<ActionResult<Guid>> CreateFavours([FromBody] FavorCreateRequest request)
+    [HttpPost(Name = "CreateFavor")]
+    public async Task<ActionResult<Guid>> CreateFavors([FromBody] FavorCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        Guid id = await _favorService.AddFavour(request);
+        Guid id = await _favorService.AddFavor(request);
 
-        return CreatedAtAction(nameof(CreateFavours), new { id }, id);
+        return CreatedAtAction(nameof(CreateFavors), new { id }, id);
     }
 
-    [HttpPatch("{id}", Name = "UpdateFavour")]
-    public async Task<IActionResult> UpdateFavours(Guid id, [FromBody] FavorUpdateRequest request)
+    [HttpPatch("{id}", Name = "UpdateFavor")]
+    public async Task<IActionResult> UpdateFavors(Guid id, [FromBody] FavorUpdateRequest request)
     {
         await ValidatorUtils.Validate(_updateValidator, request);
-        await _favorService.UpdateFavour(new UpdateFavorDto
+        await _favorService.UpdateFavor(new UpdateFavorDto
         {
             Id = id,
             Name = request.Name,
@@ -58,10 +58,10 @@ public class FavorController : ControllerBase
         return Ok();
     }
 
-    [HttpDelete("{id}", Name = "DeleteFavour")]
-    public async Task<IActionResult> DeleteFavours(Guid id)
+    [HttpDelete("{id}", Name = "DeleteFavor")]
+    public async Task<IActionResult> DeleteFavors(Guid id)
     {
-        await _favorService.DeleteFavour(id);
+        await _favorService.DeleteFavor(id);
 
         return Ok();
     }

@@ -19,16 +19,16 @@ public class FavorService : IFavorService
         _hallUnitOfWork = hallUnitOfWork;
     }
 
-    public async Task<List<FavorResponse>> GetFavours()
+    public async Task<List<FavorResponse>> GetFavors()
     {
-        var favours = await _favorRepository.GetAllAsync();
+        var favors = await _favorRepository.GetAllAsync();
 
-        return FavorMapper.ToResponse(favours);
+        return FavorMapper.ToResponse(favors);
     }
 
-    public async Task<Guid> AddFavour(FavorCreateRequest request)
+    public async Task<Guid> AddFavor(FavorCreateRequest request)
     {
-        FavorEntity favor = new FavorEntity
+        var favor = new FavorEntity
         {
             Name = request.Name,
             Price = request.Price
@@ -40,28 +40,28 @@ public class FavorService : IFavorService
         return favor.Id;
     }
 
-    public async Task UpdateFavour(UpdateFavorDto request)
+    public async Task UpdateFavor(UpdateFavorDto request)
     {
-        var favour = await GetFavour(request.Id);
+        var favorEntity = await GetFavor(request.Id);
 
-        favour.Name = request.Name;
-        favour.Price = request.Price;
+        favorEntity.Name = request.Name;
+        favorEntity.Price = request.Price;
 
         await _hallUnitOfWork.SaveChangesAsync();
     }
 
-    public async Task DeleteFavour(Guid id)
+    public async Task DeleteFavor(Guid id)
     {
-        var favour = await GetFavour(id);
+        var favor = await GetFavor(id);
 
-        _favorRepository.Remove(favour);
+        _favorRepository.Remove(favor);
         await _hallUnitOfWork.SaveChangesAsync();
     }
 
-    private async Task<FavorEntity> GetFavour(Guid favourId)
+    private async Task<FavorEntity> GetFavor(Guid favorId)
     {
-        var favour = await _favorRepository.GetByIdAsync(favourId);
+        var favorEntity = await _favorRepository.GetByIdAsync(favorId);
 
-        return favour ?? throw new NotFoundException($"Favour {favourId} not found");
+        return favorEntity ?? throw new NotFoundException($"Favor {favorId} not found");
     }
 }

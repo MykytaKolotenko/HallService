@@ -1,23 +1,15 @@
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-
 namespace Hall_rent.Exceptions.Handling;
 
-// Единственный обработчик, который не наследник AppException —
-// ловит сырую SqlException/DbUpdateException и оборачивает в ConcurrencyConflictException
+// Ловит "сырую" SqlException/DbUpdateException с кодом serialization failure (1205/3960),
+// которая долетела до middleware необёрнутой (например, из места, где явного catch не было),
+// и превращает её в понятный клиенту конфликт.
 public class SerializationConflictResolver : IExceptionResolver
 {
-    public bool CanHandle(Exception ex)
-    {
-        var sqlEx = ex as SqlException
-                    ?? (ex as DbUpdateException)?.InnerException as SqlException;
-
-        return sqlEx?.Number is 1205 or 3960;
-    }
+    public bool CanHandle(Exception ex) => SqlErrorClassifier.IsSerializationFailure(ex);
 
     public ExceptionResolution Resolve(Exception ex, string context)
     {
         var mapped = new ConcurrencyConflictException(context, ex);
-        return new ExceptionResolution(mapped, mapped.StatusCode, mapped.Title, mapped.LogLevel);
+        return new ExceptionResolution([mapped.Message], mapped.StatusCode, mapped.Title, mapped.LogLevel, mapped);
     }
 }

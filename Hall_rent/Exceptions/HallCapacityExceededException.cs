@@ -1,11 +1,11 @@
 using System.Net;
-using Hall_rent.Exceptions;
+
+namespace Hall_rent.Exceptions;
 
 public sealed class HallCapacityExceededException : AppException
 {
     public HallCapacityExceededException(Guid hallId, int capacity, int requested)
-        : base(
-            $"Hall {hallId} has capacity {capacity}, but {requested} persons were requested.")
+        : base($"Hall {hallId} has capacity {capacity}, but {requested} persons were requested.")
     {
         HallId = hallId;
         Capacity = capacity;

@@ -37,63 +37,57 @@ public sealed class BookingService : IBookingService
 
     private async Task<HallBookResponse> BookInternalAsync(BookHallDto request)
     {
-        var hall = await _hallRepository.GetByIdAsync(request.HallId)
-                   ?? throw new NotFoundException(
-                       $"Hall {request.HallId} not found");
+        HallEntity hall = await _hallRepository.GetByIdAsync(request.HallId)
+                          ?? throw new NotFoundException(
+                              $"Hall {request.HallId} not found");
 
         if (request.Persons > hall.Persons)
-        {
             throw new HallCapacityExceededException(
                 hall.Id,
                 hall.Persons,
                 request.Persons);
-        }
 
         if (!await _bookingRepository.IsHallAvailableAsync(
                 request.HallId,
                 request.StartAt,
                 request.EndAt))
-        {
             throw new HallNotAvailableException(
                 request.HallId,
                 request.StartAt,
                 request.EndAt);
-        }
 
-        var favourIds = request.Favors?.Distinct().ToList() ?? [];
+        List<Guid> favorIds = request.Favors?.Distinct().ToList() ?? [];
 
-        var unsupported = favourIds
+        List<Guid> unsupported = favorIds
             .Except(hall.Favors)
             .ToList();
 
         if (unsupported.Count > 0)
-        {
-            throw new FavoursNotOfferedException(
+            throw new FavorsNotOfferedException(
                 hall.Id,
                 unsupported);
-        }
 
-        var favours = await _favorRepository.GetByIdsAsync(favourIds);
+        List<FavorEntity> favors = await _favorRepository.GetByIdsAsync(favorIds);
 
-        if (favours.Count != favourIds.Count)
+        if (favors.Count != favorIds.Count)
         {
-            var missing = favourIds
-                .Except(favours.Select(x => x.Id))
+            List<Guid> missing = favorIds
+                .Except(favors.Select(x => x.Id))
                 .ToList();
 
             throw new NotFoundException(
-                $"Favours not found: {string.Join(", ", missing)}");
+                $"Favors not found: {string.Join(", ", missing)}");
         }
 
-        var booking = new HallBookingEntity
+        HallBookingEntity booking = new HallBookingEntity
         {
             HallId = hall.Id,
             StartAt = request.StartAt,
             EndAt = request.EndAt,
-            Favors = favours.Select(x => x.Id).ToList(),
+            Favors = favors.Select(x => x.Id).ToList(),
             Price = FavorCalculator.Calculate(
                 hall.Price,
-                FavorMapper.ToDto(favours))
+                FavorMapper.ToDto(favors))
         };
 
         await _bookingRepository.AddAsync(booking);

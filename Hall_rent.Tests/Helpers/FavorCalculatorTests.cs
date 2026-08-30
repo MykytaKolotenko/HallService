@@ -8,33 +8,33 @@ namespace Hall_rent.Tests.Helpers;
 public sealed class FavorCalculatorTests
 {
     [Fact]
-    public void Calculate_ShouldReturnStartPrice_WhenThereAreNoFavours()
+    public void Calculate_ShouldReturnStartPrice_WhenThereAreNoFavors()
     {
         FavorCalculator.Calculate(100m, []).Should().Be(100m);
     }
 
     [Fact]
-    public void Calculate_ShouldAddAllFavourPrices()
+    public void Calculate_ShouldAddAllFavorPrices()
     {
-        var favours = new List<FavorDto>
+        List<FavorDto> favors = new List<FavorDto>
         {
-            new() { Id = Guid.NewGuid(), Name = "A", Price = 10m },
-            new() { Id = Guid.NewGuid(), Name = "B", Price = 20.50m },
-            new() { Id = Guid.NewGuid(), Name = "C", Price = 4.50m }
+            new FavorDto { Id = Guid.NewGuid(), Name = "A", Price = 10m },
+            new FavorDto { Id = Guid.NewGuid(), Name = "B", Price = 20.50m },
+            new FavorDto { Id = Guid.NewGuid(), Name = "C", Price = 4.50m }
         };
 
-        FavorCalculator.Calculate(100m, favours).Should().Be(135m);
+        FavorCalculator.Calculate(100m, favors).Should().Be(135m);
     }
 
     [Fact]
     public void Calculate_ShouldPreserveDecimalPrecision()
     {
-        var favours = new List<FavorDto>
+        List<FavorDto> favors = new List<FavorDto>
         {
-            new() { Price = 0.01m },
-            new() { Price = 0.02m }
+            new FavorDto { Price = 0.01m },
+            new FavorDto { Price = 0.02m }
         };
 
-        FavorCalculator.Calculate(0.10m, favours).Should().Be(0.13m);
+        FavorCalculator.Calculate(0.10m, favors).Should().Be(0.13m);
     }
 }

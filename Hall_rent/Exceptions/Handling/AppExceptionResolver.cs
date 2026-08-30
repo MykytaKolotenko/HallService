@@ -7,6 +7,6 @@ public class AppExceptionResolver : IExceptionResolver
     public ExceptionResolution Resolve(Exception ex, string context)
     {
         var appEx = (AppException)ex;
-        return new ExceptionResolution(appEx, appEx.StatusCode, appEx.Title, appEx.LogLevel);
+        return new ExceptionResolution([appEx.Message], appEx.StatusCode, appEx.Title, appEx.LogLevel, appEx);
     }
 }

@@ -11,7 +11,7 @@ public class AppDbContext : DbContext
 
     public DbSet<HallEntity> Halls { get; set; } = null!;
     public DbSet<HallBookingEntity> Bookings { get; set; } = null!;
-    public DbSet<FavorEntity> Favours { get; set; } = null!;
+    public DbSet<FavorEntity> Favors { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,7 +47,7 @@ public class AppDbContext : DbContext
 
             builder
                 .HasOne(x => x.Hall)
-                .WithMany(x => x.Favours)
+                .WithMany(x => x.FavorsEntity)
                 .HasForeignKey(x => x.HallId);
 
             builder

@@ -17,10 +17,10 @@ public static class InfrastructureDi
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-        AddValidation(services);
-        AddRepository(services);
-        AddExceptions(services);
-        AddServices(services);
+        services.AddValidation();
+        services.AddRepository();
+        services.AddExceptions();
+        services.AddServices();
 
         services.AddScoped<IHallUnitOfWork, HallUnitOfWork>();
 
@@ -55,18 +55,20 @@ public static class InfrastructureDi
 
     private static void AddExceptions(this IServiceCollection services)
     {
-        services.AddExceptionHandler<GlobalExceptionHandler>();
-
         services.AddProblemDetails();
 
+        services.AddSingleton<ValidationExceptionResolver>(); // ← проверьте, что эта строка есть
         services.AddSingleton<SerializationConflictResolver>();
+        services.AddSingleton<UniqueViolationResolver>();
         services.AddSingleton<AppExceptionResolver>();
         services.AddSingleton<FallbackExceptionResolver>();
 
         services.AddSingleton<ExceptionDispatcher>(sp => new ExceptionDispatcher([
+            sp.GetRequiredService<ValidationExceptionResolver>(),
             sp.GetRequiredService<SerializationConflictResolver>(),
+            sp.GetRequiredService<UniqueViolationResolver>(),
             sp.GetRequiredService<AppExceptionResolver>(),
-            sp.GetRequiredService<FallbackExceptionResolver>()
+            sp.GetRequiredService<FallbackExceptionResolver>() // обязательно последним
         ]));
     }
 }

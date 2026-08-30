@@ -8,6 +8,6 @@ public class HallEntity
     public decimal Price { get; set; }
     public string Name { get; set; }
 
-    public ICollection<HallFavorEntity> Favours { get; set; }
+    public ICollection<HallFavorEntity> FavorsEntity { get; set; }
         = [];
 }
