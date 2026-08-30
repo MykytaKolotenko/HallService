@@ -8,7 +8,7 @@ public static class FavorCalculator
     {
         decimal price = startPrice;
 
-        foreach (var favorDto in favors)
+        foreach (FavorDto favorDto in favors)
         {
             price += favorDto.Price;
         }

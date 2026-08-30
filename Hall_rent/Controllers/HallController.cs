@@ -81,7 +81,7 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_bookValidator, request);
 
-        var bookingResponse = await _bookingService.BookAsync(new BookHallDto
+        HallBookResponse bookingResponse = await _bookingService.BookAsync(new BookHallDto
             {
                 StartAt = request.StartAt,
                 EndAt = request.EndAt,
@@ -99,7 +99,7 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_searchValidator, request);
 
-        var halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto
+        List<Guid> halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto
             {
                 StartAt = request.StartAt,
                 EndAt = request.EndAt,

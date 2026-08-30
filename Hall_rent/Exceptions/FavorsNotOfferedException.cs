@@ -2,9 +2,9 @@ using System.Net;
 
 namespace Hall_rent.Exceptions;
 
-public class FavoursNotOfferedException : AppException
+public class FavorsNotOfferedException : AppException
 {
-    public FavoursNotOfferedException(Guid hallId, IEnumerable<Guid> favourIds)
+    public FavorsNotOfferedException(Guid hallId, IEnumerable<Guid> favourIds)
         : base($"Hall {hallId} does not offer favours: {string.Join(", ", favourIds)}")
     {
         HallId = hallId;

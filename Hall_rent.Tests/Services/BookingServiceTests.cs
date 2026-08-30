@@ -1,5 +1,6 @@
 using System.Data;
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
@@ -13,22 +14,20 @@ namespace Hall_rent.Tests.Services;
 
 public sealed class BookingServiceTests
 {
-    private readonly Mock<IBookingRepository> _bookingRepository = new();
-    private readonly Mock<IFavorRepository> _favorRepository = new();
-    private readonly Mock<IHallRepository> _hallRepository = new();
-    private readonly Mock<IHallUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IBookingRepository> _bookingRepository = new Mock<IBookingRepository>();
+    private readonly Mock<IFavorRepository> _favorRepository = new Mock<IFavorRepository>();
+    private readonly Mock<IHallRepository> _hallRepository = new Mock<IHallRepository>();
+    private readonly Mock<IHallUnitOfWork> _unitOfWork = new Mock<IHallUnitOfWork>();
 
     private BookingService Sut(bool executeTransaction = true)
     {
         if (executeTransaction)
-        {
             _unitOfWork
                 .Setup(x => x.RunInTransactionAsync(
                     It.IsAny<IsolationLevel>(),
                     It.IsAny<Func<Task<HallBookResponse>>>(),
                     It.IsAny<string>()))
                 .Returns<IsolationLevel, Func<Task<HallBookResponse>>, string>(async (_, operation, _) => await operation());
-        }
 
         return new BookingService(
             _hallRepository.Object,
@@ -37,40 +36,46 @@ public sealed class BookingServiceTests
             _unitOfWork.Object);
     }
 
-    private static BookHallDto Request(Guid hallId, int persons = 10, params Guid[] favorIds) => new()
+    private static BookHallDto Request(Guid hallId, int persons = 10, params Guid[] favorIds)
     {
-        HallId = hallId,
-        Persons = persons,
-        StartAt = DateTime.UtcNow.AddDays(2),
-        EndAt = DateTime.UtcNow.AddDays(2).AddHours(2),
-        Favors = favorIds.ToList()
-    };
+        return new BookHallDto
+        {
+            HallId = hallId,
+            Persons = persons,
+            StartAt = DateTime.UtcNow.AddDays(2),
+            EndAt = DateTime.UtcNow.AddDays(2).AddHours(2),
+            Favors = favorIds.ToList()
+        };
+    }
 
-    private static HallEntity Hall(Guid hallId, int capacity = 20, decimal price = 100m, params Guid[] favorIds) => new()
+    private static HallEntity Hall(Guid hallId, int capacity = 20, decimal price = 100m, params Guid[] favorIds)
     {
-        Id = hallId,
-        Name = "Hall",
-        Persons = capacity,
-        Price = price,
-        Favors = favorIds.ToList()
-    };
+        return new HallEntity
+        {
+            Id = hallId,
+            Name = "Hall",
+            Persons = capacity,
+            Price = price,
+            Favors = favorIds.ToList()
+        };
+    }
 
     [Fact]
     public async Task BookAsync_ShouldCreateBookingWithCalculatedPrice()
     {
-        var hallId = Guid.NewGuid();
-        var favorId = Guid.NewGuid();
-        var request = Request(hallId, 10, favorId);
-        var favor = new FavorEntity { Id = favorId, Name = "Projector", Price = 50m };
+        Guid hallId = Guid.NewGuid();
+        Guid favorId = Guid.NewGuid();
+        BookHallDto request = Request(hallId, 10, favorId);
+        FavorEntity favor = new FavorEntity { Id = favorId, Name = "Projector", Price = 50m };
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId, 20, 100m, favorId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.Is<List<Guid>>(ids => ids.SequenceEqual(new List<Guid> { favorId })))).ReturnsAsync([favor]);
         _bookingRepository.Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>())).Callback<HallBookingEntity>(booking => { booking.Id = Guid.NewGuid(); })
             .Returns(Task.CompletedTask);
 
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default)).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken))).Returns(Task.CompletedTask);
 
-        var result = await Sut().BookAsync(request);
+        HallBookResponse result = await Sut().BookAsync(request);
 
         result.Price.Should().Be(150m);
         result.Id.Should().NotBe(Guid.Empty);
@@ -81,26 +86,26 @@ public sealed class BookingServiceTests
             b.EndAt == request.EndAt &&
             b.Price == 150m &&
             b.Favors.SequenceEqual(new List<Guid> { favorId }))), Times.Once);
-        _unitOfWork.Verify(x => x.SaveChangesAsync(default), Times.Once);
+        _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Once);
     }
 
     [Fact]
     public async Task BookAsync_ShouldUseSerializableTransaction()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId);
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.IsAny<List<Guid>>())).ReturnsAsync([]);
         _bookingRepository.Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default)).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken))).Returns(Task.CompletedTask);
         _unitOfWork.Setup(x => x.RunInTransactionAsync(
                 IsolationLevel.Serializable,
                 It.IsAny<Func<Task<HallBookResponse>>>(),
                 $"BookHall({hallId})"))
             .Returns<IsolationLevel, Func<Task<HallBookResponse>>, string>(async (_, operation, _) => await operation());
 
-        await Sut(executeTransaction: false).BookAsync(request);
+        await Sut(false).BookAsync(request);
 
         _unitOfWork.Verify(x => x.RunInTransactionAsync(
             IsolationLevel.Serializable,
@@ -111,28 +116,28 @@ public sealed class BookingServiceTests
     [Fact]
     public async Task BookAsync_ShouldThrowNotFound_WhenHallMissing()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId);
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync((HallEntity?)null);
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"Hall {hallId} not found");
         _bookingRepository.Verify(x => x.AddAsync(It.IsAny<HallBookingEntity>()), Times.Never);
-        _unitOfWork.Verify(x => x.SaveChangesAsync(default), Times.Never);
+        _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Never);
     }
 
     [Fact]
     public async Task BookAsync_ShouldThrowCapacityExceeded_WhenRequestedPersonsAreTooMany()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId, 21);
-        _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId, 20));
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId, 21);
+        _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId));
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
-        var ex = await act.Should().ThrowAsync<HallCapacityExceededException>();
+        ExceptionAssertions<HallCapacityExceededException> ex = await act.Should().ThrowAsync<HallCapacityExceededException>();
         ex.Which.HallId.Should().Be(hallId);
         ex.Which.Capacity.Should().Be(20);
         ex.Which.Requested.Should().Be(21);
@@ -143,31 +148,31 @@ public sealed class BookingServiceTests
     [Fact]
     public async Task BookAsync_ShouldThrowHallNotAvailable_WhenOverlapExists()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId);
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(false);
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
-        var ex = await act.Should().ThrowAsync<HallNotAvailableException>();
+        ExceptionAssertions<HallNotAvailableException> ex = await act.Should().ThrowAsync<HallNotAvailableException>();
         ex.Which.HallId.Should().Be(hallId);
         _bookingRepository.Verify(x => x.AddAsync(It.IsAny<HallBookingEntity>()), Times.Never);
-        _unitOfWork.Verify(x => x.SaveChangesAsync(default), Times.Never);
+        _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Never);
     }
 
     [Fact]
-    public async Task BookAsync_ShouldThrowFavoursNotOffered_WhenRequestedFavorIsNotOfferedByHall()
+    public async Task BookAsync_ShouldThrowFavorsNotOffered_WhenRequestedFavorIsNotOfferedByHall()
     {
-        var hallId = Guid.NewGuid();
-        var requestedFavorId = Guid.NewGuid();
-        var request = Request(hallId, 10, requestedFavorId);
+        Guid hallId = Guid.NewGuid();
+        Guid requestedFavorId = Guid.NewGuid();
+        BookHallDto request = Request(hallId, 10, requestedFavorId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
-        var ex = await act.Should().ThrowAsync<FavoursNotOfferedException>();
+        ExceptionAssertions<FavorsNotOfferedException> ex = await act.Should().ThrowAsync<FavorsNotOfferedException>();
         ex.Which.HallId.Should().Be(hallId);
         _favorRepository.Verify(x => x.GetByIdsAsync(It.IsAny<List<Guid>>()), Times.Never);
         _bookingRepository.Verify(x => x.AddAsync(It.IsAny<HallBookingEntity>()), Times.Never);
@@ -176,16 +181,16 @@ public sealed class BookingServiceTests
     [Fact]
     public async Task BookAsync_ShouldIgnoreDuplicateFavorIds()
     {
-        var hallId = Guid.NewGuid();
-        var favorId = Guid.NewGuid();
-        var request = Request(hallId, 10, favorId, favorId, favorId);
-        var favor = new FavorEntity { Id = favorId, Name = "Projector", Price = 50m };
+        Guid hallId = Guid.NewGuid();
+        Guid favorId = Guid.NewGuid();
+        BookHallDto request = Request(hallId, 10, favorId, favorId, favorId);
+        FavorEntity favor = new FavorEntity { Id = favorId, Name = "Projector", Price = 50m };
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId, 20, 100m, favorId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.Is<List<Guid>>(ids => ids.SequenceEqual(new List<Guid> { favorId }))))
             .ReturnsAsync([favor]);
         _bookingRepository.Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default)).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken))).Returns(Task.CompletedTask);
 
         await Sut().BookAsync(request);
 
@@ -195,33 +200,33 @@ public sealed class BookingServiceTests
     [Fact]
     public async Task BookAsync_ShouldThrowNotFound_WhenFavorIsMissingFromRepository()
     {
-        var hallId = Guid.NewGuid();
-        var favorId = Guid.NewGuid();
-        var request = Request(hallId, 10, favorId);
+        Guid hallId = Guid.NewGuid();
+        Guid favorId = Guid.NewGuid();
+        BookHallDto request = Request(hallId, 10, favorId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId, 20, 100m, favorId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.IsAny<List<Guid>>())).ReturnsAsync([]);
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
         await act.Should().ThrowAsync<NotFoundException>()
-            .WithMessage($"Favours not found: {favorId}");
+            .WithMessage($"Favors not found: {favorId}");
         _bookingRepository.Verify(x => x.AddAsync(It.IsAny<HallBookingEntity>()), Times.Never);
     }
 
     [Fact]
-    public async Task BookAsync_ShouldAllowBookingWithoutFavours()
+    public async Task BookAsync_ShouldAllowBookingWithoutFavors()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId);
-        var hall = Hall(hallId, 20, 100m);
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId);
+        HallEntity hall = Hall(hallId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(hall);
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.Is<List<Guid>>(ids => ids.Count == 0))).ReturnsAsync([]);
         _bookingRepository.Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default)).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken))).Returns(Task.CompletedTask);
 
-        var result = await Sut().BookAsync(request);
+        HallBookResponse result = await Sut().BookAsync(request);
 
         result.Price.Should().Be(100m);
         _bookingRepository.Verify(x => x.AddAsync(It.Is<HallBookingEntity>(b => b.Favors.Count == 0 && b.Price == 100m)), Times.Once);
@@ -230,15 +235,15 @@ public sealed class BookingServiceTests
     [Fact]
     public async Task BookAsync_ShouldPropagateSaveChangesException()
     {
-        var hallId = Guid.NewGuid();
-        var request = Request(hallId);
+        Guid hallId = Guid.NewGuid();
+        BookHallDto request = Request(hallId);
         _hallRepository.Setup(x => x.GetByIdAsync(hallId)).ReturnsAsync(Hall(hallId));
         _bookingRepository.Setup(x => x.IsHallAvailableAsync(hallId, request.StartAt, request.EndAt)).ReturnsAsync(true);
         _favorRepository.Setup(x => x.GetByIdsAsync(It.IsAny<List<Guid>>())).ReturnsAsync([]);
         _bookingRepository.Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default)).ThrowsAsync(new InvalidOperationException("failure"));
+        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken))).ThrowsAsync(new InvalidOperationException("failure"));
 
-        var act = () => Sut().BookAsync(request);
+        Func<Task<HallBookResponse>> act = () => Sut().BookAsync(request);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("failure");

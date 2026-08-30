@@ -6,14 +6,14 @@ namespace Hall_rent.Helpers;
 
 public static class FavorMapper
 {
-    public static List<FavorDto> ToDto(List<FavorEntity> favours)
+    public static List<FavorDto> ToDto(List<FavorEntity> favors)
     {
-        return favours.Select(ToDto).ToList();
+        return favors.Select(ToDto).ToList();
     }
 
-    public static List<FavorResponse> ToResponse(List<FavorEntity> favours)
+    public static List<FavorResponse> ToResponse(List<FavorEntity> favors)
     {
-        return favours.Select(ToResponse).ToList();
+        return favors.Select(ToResponse).ToList();
     }
 
     private static FavorResponse ToResponse(FavorEntity favor)

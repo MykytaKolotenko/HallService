@@ -84,7 +84,7 @@ public sealed class ExceptionHandlingTests
         new NotFoundException("x").StatusCode.Should().Be(HttpStatusCode.NotFound);
         new HallNotAvailableException(Guid.NewGuid(), DateTime.UtcNow, DateTime.UtcNow.AddHours(1)).StatusCode.Should().Be(HttpStatusCode.Conflict);
         new HallCapacityExceededException(Guid.NewGuid(), 10, 11).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        new FavoursNotOfferedException(Guid.NewGuid(), [Guid.NewGuid()]).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        new FavorsNotOfferedException(Guid.NewGuid(), [Guid.NewGuid()]).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         new HallNameAlreadyExistsException("Hall", new Exception()).StatusCode.Should().Be(HttpStatusCode.Conflict);
         new ConcurrencyConflictException("booking", new Exception()).StatusCode.Should().Be(HttpStatusCode.Conflict);
     }

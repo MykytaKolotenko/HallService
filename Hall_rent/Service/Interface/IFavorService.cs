@@ -6,8 +6,8 @@ namespace Hall_rent.Service;
 
 public interface IFavorService
 {
-    public Task<List<FavorResponse>> GetFavours();
-    public Task<Guid> AddFavour(FavorCreateRequest request);
-    public Task UpdateFavour(UpdateFavorDto request);
-    public Task DeleteFavour(Guid id);
+    public Task<List<FavorResponse>> GetFavors();
+    public Task<Guid> AddFavor(FavorCreateRequest request);
+    public Task UpdateFavor(UpdateFavorDto request);
+    public Task DeleteFavor(Guid id);
 }

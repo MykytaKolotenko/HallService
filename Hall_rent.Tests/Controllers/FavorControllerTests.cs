@@ -14,75 +14,78 @@ namespace Hall_rent.Tests.Controllers;
 
 public sealed class FavorControllerTests
 {
-    private readonly Mock<IFavorService> _service = new();
+    private readonly Mock<IFavorService> _service = new Mock<IFavorService>();
 
-    private FavorController Sut() => new(
-        _service.Object,
-        new FavorUpdateRequestValidator(),
-        new FavorCreateRequestValidator());
+    private FavorController Sut()
+    {
+        return new FavorController(
+            _service.Object,
+            new FavorUpdateRequestValidator(),
+            new FavorCreateRequestValidator());
+    }
 
     [Fact]
-    public async Task GetFavours_ShouldReturnOkWithServiceResult()
+    public async Task GetFavors_ShouldReturnOkWithServiceResult()
     {
-        var data = new List<FavorResponse>
+        List<FavorResponse> data = new List<FavorResponse>
         {
-            new() { Id = Guid.NewGuid(), Name = "Wi-Fi", Price = 10m }
+            new FavorResponse { Id = Guid.NewGuid(), Name = "Wi-Fi", Price = 10m }
         };
-        _service.Setup(x => x.GetFavours()).ReturnsAsync(data);
+        _service.Setup(x => x.GetFavors()).ReturnsAsync(data);
 
-        var result = await Sut().GetFavours();
+        ActionResult<List<FavorResponse>> result = await Sut().GetFavors();
 
-        var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        OkObjectResult ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().BeSameAs(data);
     }
 
     [Fact]
-    public async Task CreateFavours_ShouldReturnCreatedResult()
+    public async Task CreateFavors_ShouldReturnCreatedResult()
     {
-        var id = Guid.NewGuid();
-        var request = new FavorCreateRequest { Name = "Projector", Price = 50m };
-        _service.Setup(x => x.AddFavour(request)).ReturnsAsync(id);
+        Guid id = Guid.NewGuid();
+        FavorCreateRequest request = new FavorCreateRequest { Name = "Projector", Price = 50m };
+        _service.Setup(x => x.AddFavor(request)).ReturnsAsync(id);
 
-        var result = await Sut().CreateFavours(request);
+        ActionResult<Guid> result = await Sut().CreateFavors(request);
 
-        var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        created.ActionName.Should().Be(nameof(FavorController.CreateFavours));
+        CreatedAtActionResult created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        created.ActionName.Should().Be(nameof(FavorController.CreateFavors));
         created.Value.Should().Be(id);
-        _service.Verify(x => x.AddFavour(request), Times.Once);
+        _service.Verify(x => x.AddFavor(request), Times.Once);
     }
 
     [Fact]
-    public async Task CreateFavours_ShouldRejectInvalidRequestBeforeService()
+    public async Task CreateFavors_ShouldRejectInvalidRequestBeforeService()
     {
-        var request = new FavorCreateRequest { Name = "", Price = 0m };
+        FavorCreateRequest request = new FavorCreateRequest { Name = "", Price = 0m };
 
-        var act = () => Sut().CreateFavours(request);
+        Func<Task<ActionResult<Guid>>> act = () => Sut().CreateFavors(request);
 
         await act.Should().ThrowAsync<ValidationException>();
-        _service.Verify(x => x.AddFavour(It.IsAny<FavorCreateRequest>()), Times.Never);
+        _service.Verify(x => x.AddFavor(It.IsAny<FavorCreateRequest>()), Times.Never);
     }
 
     [Fact]
-    public async Task UpdateFavours_ShouldPassRouteIdToService()
+    public async Task UpdateFavors_ShouldPassRouteIdToService()
     {
-        var id = Guid.NewGuid();
-        var request = new FavorUpdateRequest { Name = "New", Price = 25m };
+        Guid id = Guid.NewGuid();
+        FavorUpdateRequest request = new FavorUpdateRequest { Name = "New", Price = 25m };
 
-        var result = await Sut().UpdateFavours(id, request);
+        IActionResult result = await Sut().UpdateFavors(id, request);
 
         result.Should().BeOfType<OkResult>();
-        _service.Verify(x => x.UpdateFavour(It.Is<UpdateFavorDto>(d =>
+        _service.Verify(x => x.UpdateFavor(It.Is<UpdateFavorDto>(d =>
             d.Id == id && d.Name == "New" && d.Price == 25m)), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteFavours_ShouldPassIdToService()
+    public async Task DeleteFavors_ShouldPassIdToService()
     {
-        var id = Guid.NewGuid();
+        Guid id = Guid.NewGuid();
 
-        var result = await Sut().DeleteFavours(id);
+        IActionResult result = await Sut().DeleteFavors(id);
 
         result.Should().BeOfType<OkResult>();
-        _service.Verify(x => x.DeleteFavour(id), Times.Once);
+        _service.Verify(x => x.DeleteFavor(id), Times.Once);
     }
 }

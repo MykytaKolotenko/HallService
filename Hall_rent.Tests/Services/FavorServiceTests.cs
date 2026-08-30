@@ -22,14 +22,14 @@ public sealed class FavorServiceTests
     }
 
     [Fact]
-    public async Task GetFavours_ShouldReturnMappedResults()
+    public async Task GetFavors_ShouldReturnMappedResults()
     {
         Guid id = Guid.NewGuid();
         _repository.Setup(x => x.GetAllAsync()).ReturnsAsync([
             new FavorEntity { Id = id, Name = "Wi-Fi", Price = 10m }
         ]);
 
-        List<FavorResponse> result = await Sut().GetFavours();
+        List<FavorResponse> result = await Sut().GetFavors();
 
         result.Should().ContainSingle();
         result[0].Id.Should().Be(id);
@@ -38,15 +38,15 @@ public sealed class FavorServiceTests
     }
 
     [Fact]
-    public async Task GetFavours_ShouldReturnEmpty_WhenRepositoryReturnsEmpty()
+    public async Task GetFavors_ShouldReturnEmpty_WhenRepositoryReturnsEmpty()
     {
         _repository.Setup(x => x.GetAllAsync()).ReturnsAsync([]);
 
-        (await Sut().GetFavours()).Should().BeEmpty();
+        (await Sut().GetFavors()).Should().BeEmpty();
     }
 
     [Fact]
-    public async Task AddFavour_ShouldMapAddAndSave()
+    public async Task AddFavor_ShouldMapAddAndSave()
     {
         FavorCreateRequest request = new FavorCreateRequest
         {
@@ -63,7 +63,7 @@ public sealed class FavorServiceTests
             .Setup(x => x.SaveChangesAsync(default(CancellationToken)))
             .Returns(Task.CompletedTask);
 
-        Guid result = await Sut().AddFavour(request);
+        Guid result = await Sut().AddFavor(request);
 
         result.Should().NotBe(Guid.Empty);
 
@@ -80,14 +80,14 @@ public sealed class FavorServiceTests
     }
 
     [Fact]
-    public async Task UpdateFavour_ShouldUpdateAndSave()
+    public async Task UpdateFavor_ShouldUpdateAndSave()
     {
         Guid id = Guid.NewGuid();
         FavorEntity entity = new FavorEntity { Id = id, Name = "Old", Price = 10m };
         UpdateFavorDto request = new UpdateFavorDto { Id = id, Name = "New", Price = 25m };
         _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(entity);
 
-        await Sut().UpdateFavour(request);
+        await Sut().UpdateFavor(request);
 
         entity.Name.Should().Be("New");
         entity.Price.Should().Be(25m);
@@ -95,12 +95,12 @@ public sealed class FavorServiceTests
     }
 
     [Fact]
-    public async Task UpdateFavour_ShouldThrowNotFound_AndNotSave_WhenMissing()
+    public async Task UpdateFavor_ShouldThrowNotFound_AndNotSave_WhenMissing()
     {
         Guid id = Guid.NewGuid();
         _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((FavorEntity?)null);
 
-        Func<Task> act = () => Sut().UpdateFavour(new UpdateFavorDto
+        Func<Task> act = () => Sut().UpdateFavor(new UpdateFavorDto
         {
             Id = id,
             Name = "New",
@@ -108,30 +108,30 @@ public sealed class FavorServiceTests
         });
 
         await act.Should().ThrowAsync<NotFoundException>()
-            .WithMessage($"Favour {id} not found");
+            .WithMessage($"Favor {id} not found");
         _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteFavour_ShouldRemoveAndSave()
+    public async Task DeleteFavor_ShouldRemoveAndSave()
     {
         Guid id = Guid.NewGuid();
         FavorEntity entity = new FavorEntity { Id = id, Name = "Parking", Price = 20m };
         _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(entity);
 
-        await Sut().DeleteFavour(id);
+        await Sut().DeleteFavor(id);
 
         _repository.Verify(x => x.Remove(entity), Times.Once);
         _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteFavour_ShouldThrowNotFound_AndNotRemove_WhenMissing()
+    public async Task DeleteFavor_ShouldThrowNotFound_AndNotRemove_WhenMissing()
     {
         Guid id = Guid.NewGuid();
         _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((FavorEntity?)null);
 
-        Func<Task> act = () => Sut().DeleteFavour(id);
+        Func<Task> act = () => Sut().DeleteFavor(id);
 
         await act.Should().ThrowAsync<NotFoundException>();
         _repository.Verify(x => x.Remove(It.IsAny<FavorEntity>()), Times.Never);
