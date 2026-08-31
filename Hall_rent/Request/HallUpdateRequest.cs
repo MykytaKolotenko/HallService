@@ -1,6 +1,6 @@
 namespace Hall_rent.Request;
 
-public struct HallUpdateRequest
+public record HallUpdateRequest
 {
     public decimal Price { get; set; }
     public int Persons { get; set; }

@@ -1,6 +1,6 @@
 namespace Hall_rent.Request;
 
-public struct HallSearchRequest
+public record HallSearchRequest
 {
     public DateTime StartAt { get; set; }
     public DateTime EndAt { get; set; }

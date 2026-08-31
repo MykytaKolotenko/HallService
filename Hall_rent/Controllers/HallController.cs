@@ -40,7 +40,7 @@ public class HallController : ControllerBase
     public async Task<ActionResult<Guid>> CreateHall([FromBody] HallCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        Guid id = await _hallService.AddHall(new HallCreateDto
+        var id = await _hallService.AddHall(new HallCreateDto
             {
                 Name = request.Name,
                 Price = request.Price,
@@ -81,7 +81,7 @@ public class HallController : ControllerBase
     {
         await ValidatorUtils.Validate(_bookValidator, request);
 
-        HallBookResponse bookingResponse = await _bookingService.BookAsync(new BookHallDto
+        var bookingResponse = await _bookingService.BookAsync(new BookHallDto
             {
                 StartAt = request.StartAt,
                 EndAt = request.EndAt,
@@ -95,11 +95,11 @@ public class HallController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<List<Guid>>> SearchHalls([FromQuery] HallSearchRequest request)
+    public async Task<ActionResult<List<Guid>>> SearchHalls([FromBody] HallSearchRequest request)
     {
         await ValidatorUtils.Validate(_searchValidator, request);
 
-        List<Guid> halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto
+        var halls = await _hallService.FindAvailableHallIdsAsync(new HallSearchDto
             {
                 StartAt = request.StartAt,
                 EndAt = request.EndAt,

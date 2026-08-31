@@ -1,6 +1,6 @@
 namespace Hall_rent.Request;
 
-public struct FavorCreateRequest
+public record FavorCreateRequest
 {
     public string Name { get; set; }
     public decimal Price { get; set; }

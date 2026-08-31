@@ -1,6 +1,6 @@
 namespace Hall_rent.Request;
 
-public struct HallCreateRequest
+public record HallCreateRequest
 {
     public List<Guid>? Favors { get; set; }
 

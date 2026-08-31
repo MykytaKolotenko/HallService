@@ -1,6 +1,6 @@
 namespace Hall_rent.Response;
 
-public struct FavorResponse
+public record FavorResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
