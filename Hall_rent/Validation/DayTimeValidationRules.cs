@@ -11,12 +11,12 @@ public static class DayTimeValidationRules
         validator.RuleFor(x => x.From).NotEmpty();
         validator.RuleFor(x => x.To).NotEmpty();
 
-        validator.RuleFor(x => x.From)
-            .LessThan(x => x.To)
-            .WithMessage("StartAt must be earlier than EndAt.");
+        validator.RuleFor(x => x.To)
+            .GreaterThan(x => x.From)
+            .WithMessage("Start date must be earlier than end date.");
 
         validator.RuleFor(x => x.From)
             .GreaterThan(clock.UtcNow)
-            .WithMessage("End date must be in the future.");
+            .WithMessage("Start date must be in the future.");
     }
 }

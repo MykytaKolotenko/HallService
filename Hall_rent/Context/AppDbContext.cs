@@ -25,6 +25,10 @@ public class AppDbContext : DbContext
             builder.Property(x => x.Price).HasPrecision(18, 2);
         });
 
+        modelBuilder.Entity<HallBookingFavorEntity>()
+            .Property(x => x.PriceAtBooking)
+            .HasPrecision(18, 2);
+
         modelBuilder.Entity<HallBookingEntity>(builder =>
         {
             builder.HasKey(x => x.Id);

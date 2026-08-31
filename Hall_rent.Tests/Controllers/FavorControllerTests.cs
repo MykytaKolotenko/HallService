@@ -50,8 +50,7 @@ public sealed class FavorControllerTests
 
         var result = await Sut().CreateFavors(request);
 
-        var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        created.ActionName.Should().Be(nameof(FavorController.CreateFavors));
+        var created = result.Result.Should().BeOfType<CreatedResult>().Subject;
         created.Value.Should().Be(new FavorCreateResponse(id));
         _service.Verify(x => x.AddFavor(dto), Times.Once);
     }
@@ -71,7 +70,7 @@ public sealed class FavorControllerTests
     public async Task UpdateFavors_ShouldPassRouteIdToService()
     {
         var id = Guid.NewGuid();
-        var request = new FavorUpdateRequest { Name = "New", Price = 25m };
+        var request = new FavorUpdateRequest { Id = id, Name = "New", Price = 25m };
 
         var result = await Sut().UpdateFavors(id, request);
 

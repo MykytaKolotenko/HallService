@@ -56,9 +56,15 @@ public sealed class FavorServiceTests
         var dto = FavorMapper.ToDto(request);
 
 
+        FavorEntity? addedFavor = null;
+
         _repository
             .Setup(x => x.AddAsync(It.IsAny<FavorEntity>()))
-            .Callback<FavorEntity>(favor => { favor.Id = Guid.NewGuid(); })
+            .Callback<FavorEntity>(favor =>
+            {
+                addedFavor = favor;
+                favor.Id = Guid.NewGuid();
+            })
             .Returns(Task.CompletedTask);
 
         _unitOfWork
@@ -69,9 +75,11 @@ public sealed class FavorServiceTests
 
         result.Should().NotBe(Guid.Empty);
 
+        addedFavor.Should().NotBeNull();
+        addedFavor!.Id.Should().NotBe(Guid.Empty);
+
         _repository.Verify(
             x => x.AddAsync(It.Is<FavorEntity>(favor =>
-                favor.Id != Guid.Empty &&
                 favor.Name == request.Name &&
                 favor.Price == request.Price)),
             Times.Once);

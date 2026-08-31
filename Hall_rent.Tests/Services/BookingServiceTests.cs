@@ -27,7 +27,7 @@ public sealed class BookingServiceTests
                 .Setup(x => x.RunInTransactionAsync(
                     It.IsAny<IsolationLevel>(),
                     It.IsAny<Func<Task<HallBookResponse>>>()))
-                .Returns<IsolationLevel, Func<Task<HallBookResponse>>, string>(async (_, operation, _) => await operation());
+                .Returns((IsolationLevel _, Func<Task<HallBookResponse>> operation) => operation());
 
         return new BookingService(
             _hallRepository.Object,
@@ -106,9 +106,15 @@ public sealed class BookingServiceTests
                     ids.SequenceEqual(new List<Guid> { favorId }))))
             .ReturnsAsync(new List<FavorEntity> { favor });
 
+        HallBookingEntity? addedBooking = null;
+
         _bookingRepository
             .Setup(x => x.AddAsync(It.IsAny<HallBookingEntity>()))
-            .Callback<HallBookingEntity>(booking => { booking.Id = Guid.NewGuid(); })
+            .Callback<HallBookingEntity>(booking =>
+            {
+                addedBooking = booking;
+                booking.Id = Guid.NewGuid();
+            })
             .Returns(Task.CompletedTask);
 
         _unitOfWork
@@ -119,16 +125,17 @@ public sealed class BookingServiceTests
 
         result.Price.Should().Be(150m);
         result.Id.Should().NotBe(Guid.Empty);
+        addedBooking.Should().NotBeNull();
+        addedBooking!.Id.Should().NotBe(Guid.Empty);
 
         _bookingRepository.Verify(
             x => x.AddAsync(It.Is<HallBookingEntity>(b =>
-                b.Id != Guid.Empty &&
                 b.HallId == hallId &&
                 b.From == request.StartAt &&
                 b.To == request.EndAt &&
                 b.Price == 150m &&
                 b.Favors.Count == 1 &&
-                b.Favors.Any(f => f.FavorId == favorId))),
+                b.Favors.Any(f => f.Favor.Id == favorId))),
             Times.Once);
 
         _favorResolver.Verify(
@@ -176,7 +183,7 @@ public sealed class BookingServiceTests
             .Setup(x => x.RunInTransactionAsync(
                 IsolationLevel.Serializable,
                 It.IsAny<Func<Task<HallBookResponse>>>()))
-            .Returns<IsolationLevel, Func<Task<HallBookResponse>>, string>(async (_, operation, _) => await operation());
+            .Returns((IsolationLevel _, Func<Task<HallBookResponse>> operation) => operation());
 
         await Sut(false).BookAsync(request);
 
@@ -411,7 +418,7 @@ public sealed class BookingServiceTests
             x => x.AddAsync(
                 It.Is<HallBookingEntity>(b =>
                     b.Favors.Count == 1 &&
-                    b.Favors.Any(f => f.FavorId == favorId))),
+                    b.Favors.Any(f => f.Favor.Id == favorId))),
             Times.Once);
     }
 

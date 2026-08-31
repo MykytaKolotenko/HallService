@@ -39,9 +39,15 @@ public sealed class HallServiceTests
             .Setup(x => x.ResolveOrThrowAsync(It.IsAny<IEnumerable<Guid>>()))
             .ReturnsAsync([favor]);
 
+        HallEntity? addedHall = null;
+
         _repository
             .Setup(x => x.AddAsync(It.IsAny<HallEntity>()))
-            .Callback<HallEntity>(hall => { hall.Id = Guid.NewGuid(); })
+            .Callback<HallEntity>(hall =>
+            {
+                addedHall = hall;
+                hall.Id = Guid.NewGuid();
+            })
             .Returns(Task.CompletedTask);
 
         _unitOfWork
@@ -51,10 +57,11 @@ public sealed class HallServiceTests
         var result = await Sut().CreateHall(dto);
 
         result.Should().NotBe(Guid.Empty);
+        addedHall.Should().NotBeNull();
+        addedHall!.Id.Should().NotBe(Guid.Empty);
 
         _repository.Verify(
             x => x.AddAsync(It.Is<HallEntity>(hall =>
-                hall.Id != Guid.Empty &&
                 hall.Name == dto.Name &&
                 hall.Price == dto.Price &&
                 hall.Persons == dto.Persons &&

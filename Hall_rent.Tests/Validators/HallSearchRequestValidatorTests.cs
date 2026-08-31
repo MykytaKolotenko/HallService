@@ -39,11 +39,11 @@ public sealed class HallSearchRequestValidatorTests
         };
 
         Validator().TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.From);
+            .ShouldHaveValidationErrorFor(x => x.To);
     }
 
     [Fact]
-    public void ShouldRejectEndAtInThePast()
+    public void ShouldRejectStartAtInThePast()
     {
         var request = new HallSearchRequest
         {
@@ -53,7 +53,7 @@ public sealed class HallSearchRequestValidatorTests
         };
 
         Validator().TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.To);
+            .ShouldHaveValidationErrorFor(x => x.From);
     }
 
     [Fact]

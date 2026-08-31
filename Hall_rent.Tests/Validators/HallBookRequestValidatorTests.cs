@@ -35,7 +35,7 @@ public sealed class HallBookRequestValidatorTests
 
         _validator.TestValidate(request)
             .ShouldHaveValidationErrorFor(x => x.From)
-            .WithErrorMessage("StartAt must be in the future.");
+            .WithErrorMessage("Start date must be in the future.");
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class HallBookRequestValidatorTests
 
         _validator.TestValidate(request)
             .ShouldHaveValidationErrorFor(x => x.To)
-            .WithErrorMessage("EndAt must be greater than StartAt.");
+            .WithErrorMessage("Start date must be earlier than end date.");
     }
 
     [Fact]

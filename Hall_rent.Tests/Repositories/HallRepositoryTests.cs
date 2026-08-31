@@ -59,13 +59,11 @@ public sealed class HallRepositoryTests
     [Fact]
     public async Task FindAvailableHallsAsync_ShouldFilterByCapacity()
     {
-        await using var db = DbContextFactory.CreateInMemory();
-        var repository = new HallRepository(db);
         var enough = new HallEntity { Id = Guid.NewGuid(), Name = "Enough", Persons = 20, Price = 100m };
         var tooSmall = new HallEntity { Id = Guid.NewGuid(), Name = "Small", Persons = 5, Price = 80m };
-        db.Halls.AddRange(enough, tooSmall);
-        await db.SaveChangesAsync();
-        var start = DateTime.UtcNow.AddDays(1);
+        var db = TestAsyncQueryable.CreateContext([enough, tooSmall], []);
+        var repository = new HallRepository(db.Object);
+        var start = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
         var end = start.AddHours(2);
 
         var result = await repository.FindAvailableHallsAsync(start, end, 10);
@@ -76,14 +74,11 @@ public sealed class HallRepositoryTests
     [Fact]
     public async Task FindAvailableHallsAsync_ShouldExcludeOverlappingBooking()
     {
-        await using var db = DbContextFactory.CreateInMemory();
-        var repository = new HallRepository(db);
         var free = new HallEntity { Id = Guid.NewGuid(), Name = "Free", Persons = 20, Price = 100m };
         var booked = new HallEntity { Id = Guid.NewGuid(), Name = "Booked", Persons = 20, Price = 100m };
-        db.Halls.AddRange(free, booked);
         var start = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
         var end = start.AddHours(2);
-        db.Bookings.Add(new HallBookingEntity
+        var booking = new HallBookingEntity
         {
             Id = Guid.NewGuid(),
             HallId = booked.Id,
@@ -91,8 +86,10 @@ public sealed class HallRepositoryTests
             To = end.AddHours(1),
             Price = 100m,
             Favors = []
-        });
-        await db.SaveChangesAsync();
+        };
+
+        var db = TestAsyncQueryable.CreateContext([free, booked], [booking]);
+        var repository = new HallRepository(db.Object);
 
         var result = await repository.FindAvailableHallsAsync(start, end, 10);
 
@@ -102,19 +99,18 @@ public sealed class HallRepositoryTests
     [Fact]
     public async Task FindAvailableHallsAsync_ShouldAllowBookingStartingExactlyWhenPreviousEnds()
     {
-        await using var db = DbContextFactory.CreateInMemory();
-        var repository = new HallRepository(db);
         var hall = new HallEntity { Id = Guid.NewGuid(), Name = "Hall", Persons = 20, Price = 100m };
-        db.Halls.Add(hall);
         var previousStart = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
         var previousEnd = previousStart.AddHours(2);
-        db.Bookings.Add(new HallBookingEntity
+        var booking = new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hall.Id,
             From = previousStart, To = previousEnd,
             Price = 100m, Favors = []
-        });
-        await db.SaveChangesAsync();
+        };
+
+        var db = TestAsyncQueryable.CreateContext([hall], [booking]);
+        var repository = new HallRepository(db.Object);
 
         var result = await repository.FindAvailableHallsAsync(previousEnd, previousEnd.AddHours(2), 10);
 
@@ -124,18 +120,17 @@ public sealed class HallRepositoryTests
     [Fact]
     public async Task FindAvailableHallsAsync_ShouldAllowSearchEndingExactlyWhenExistingStarts()
     {
-        await using var db = DbContextFactory.CreateInMemory();
-        var repository = new HallRepository(db);
         var hall = new HallEntity { Id = Guid.NewGuid(), Name = "Hall", Persons = 20, Price = 100m };
-        db.Halls.Add(hall);
         var existingStart = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
-        db.Bookings.Add(new HallBookingEntity
+        var booking = new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hall.Id,
             From = existingStart, To = existingStart.AddHours(2),
             Price = 100m, Favors = []
-        });
-        await db.SaveChangesAsync();
+        };
+
+        var db = TestAsyncQueryable.CreateContext([hall], [booking]);
+        var repository = new HallRepository(db.Object);
 
         var result = await repository.FindAvailableHallsAsync(existingStart.AddHours(-2), existingStart, 10);
 

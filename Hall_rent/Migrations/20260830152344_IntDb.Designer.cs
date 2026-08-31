@@ -4,6 +4,7 @@ using Hall_rent.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hall_rent.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260830152344_IntDb")]
+    partial class IntDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,8 +50,12 @@ namespace Hall_rent.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("From")
+                    b.Property<DateTime>("EndAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Favors")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("HallId")
                         .HasColumnType("uniqueidentifier");
@@ -57,40 +64,12 @@ namespace Hall_rent.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("To")
+                    b.Property<DateTime>("StartAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.ToTable("Bookings");
-                });
-
-            modelBuilder.Entity("Hall_rent.Entity.HallBookingFavorEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FavorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HallBookingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("PriceAtBooking")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookingId");
-
-                    b.HasIndex("FavorId");
-
-                    b.ToTable("HallBookingFavorEntity");
                 });
 
             modelBuilder.Entity("Hall_rent.Entity.HallEntity", b =>
@@ -134,25 +113,6 @@ namespace Hall_rent.Migrations
                     b.ToTable("HallFavorLinks", (string)null);
                 });
 
-            modelBuilder.Entity("Hall_rent.Entity.HallBookingFavorEntity", b =>
-                {
-                    b.HasOne("Hall_rent.Entity.HallBookingEntity", "Booking")
-                        .WithMany("Favors")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Hall_rent.Entity.FavorEntity", "Favor")
-                        .WithMany()
-                        .HasForeignKey("FavorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("Favor");
-                });
-
             modelBuilder.Entity("Hall_rent.Entity.HallFavorEntity", b =>
                 {
                     b.HasOne("Hall_rent.Entity.FavorEntity", "Favor")
@@ -175,11 +135,6 @@ namespace Hall_rent.Migrations
             modelBuilder.Entity("Hall_rent.Entity.FavorEntity", b =>
                 {
                     b.Navigation("Halls");
-                });
-
-            modelBuilder.Entity("Hall_rent.Entity.HallBookingEntity", b =>
-                {
-                    b.Navigation("Favors");
                 });
 
             modelBuilder.Entity("Hall_rent.Entity.HallEntity", b =>
