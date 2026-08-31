@@ -6,7 +6,6 @@ using Hall_rent.Exceptions.Handling;
 using Hall_rent.Repository;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Hall_rent.Tests.Infrastructure;
@@ -34,7 +33,6 @@ public sealed class HallUnitOfWorkTests
         ]);
         return new HallUnitOfWork(
             context,
-            NullLogger<HallUnitOfWork>.Instance,
             dispatcher);
     }
 

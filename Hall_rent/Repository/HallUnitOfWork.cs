@@ -13,14 +13,14 @@ public class HallUnitOfWork : IHallUnitOfWork
     private readonly AppDbContext _dbContext;
     private readonly ExceptionDispatcher _exceptionDispatcher;
 
-    public HallUnitOfWork(AppDbContext dbContext, ILogger<HallUnitOfWork> logger, ExceptionDispatcher exceptionDispatcher)
+    public HallUnitOfWork(AppDbContext dbContext, ExceptionDispatcher exceptionDispatcher)
     {
         _dbContext = dbContext;
         _exceptionDispatcher = exceptionDispatcher;
     }
 
     public async Task SaveChangesAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default(CancellationToken))
     {
         try
         {
