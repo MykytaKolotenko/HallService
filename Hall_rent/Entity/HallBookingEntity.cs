@@ -5,7 +5,8 @@ public class HallBookingEntity
     public Guid Id { get; set; }
     public Guid HallId { get; set; }
     public decimal Price { get; set; }
-    public List<Guid> Favors { get; set; } = new List<Guid>();
-    public DateTime StartAt { get; set; }
-    public DateTime EndAt { get; set; }
+    public DateTime From { get; set; }
+    public DateTime To { get; set; }
+
+    public ICollection<HallBookingFavorEntity> Favors { get; set; } = [];
 }

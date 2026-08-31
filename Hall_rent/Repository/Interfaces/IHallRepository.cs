@@ -5,8 +5,8 @@ namespace Hall_rent.Repository.Interfaces;
 public interface IHallRepository
 {
     Task AddAsync(HallEntity hall);
-    Task<HallEntity?> GetByIdAsync(Guid id);
+    Task<HallEntity?> GetByIdWithFavorsAsync(Guid id);
     void Remove(HallEntity hall);
 
-    Task<List<HallEntity>> FindAvailableHallsAsync(DateTime startAt, DateTime endAt, int persons);
+    Task<List<HallEntity>> FindAvailableHallsAsync(DateTime from, DateTime to, int persons);
 }

@@ -1,6 +1,6 @@
 using Hall_rent.Entity;
 
-namespace Hall_rent.Helpers;
+namespace Hall_rent.Service.Interface;
 
 public interface IFavorResolver
 {

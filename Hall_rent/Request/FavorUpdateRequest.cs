@@ -1,7 +1,10 @@
+using Hall_rent.Request.Interface;
+
 namespace Hall_rent.Request;
 
-public record FavorUpdateRequest
+public record FavorUpdateRequest : IFavorRequest
 {
-    public string Name { get; set; }
-    public decimal Price { get; set; }
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public decimal Price { get; init; }
 }

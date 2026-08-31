@@ -1,7 +1,7 @@
 namespace Hall_rent.Dto;
 
-public class DateRangeDto
+public record DateRangeDto
 {
-    public DateTime From { get; set; }
-    public DateTime To { get; set; }
+    public DateTime From { get; init; }
+    public DateTime To { get; init; }
 }

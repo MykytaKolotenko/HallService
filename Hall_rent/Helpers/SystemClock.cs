@@ -1,4 +1,4 @@
-using Hall_rent.Helpers;
+namespace Hall_rent.Helpers;
 
 public sealed class SystemClock : IClock
 {

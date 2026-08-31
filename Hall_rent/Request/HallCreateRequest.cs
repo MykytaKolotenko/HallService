@@ -2,9 +2,9 @@ namespace Hall_rent.Request;
 
 public record HallCreateRequest
 {
-    public List<Guid>? Favors { get; set; }
+    public List<Guid>? Favors { get; init; }
 
-    public string Name { get; set; }
-    public int Persons { get; set; }
-    public decimal Price { get; set; }
+    public string Name { get; init; }
+    public int Persons { get; init; }
+    public decimal Price { get; init; }
 }

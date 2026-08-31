@@ -2,9 +2,10 @@ using FluentAssertions;
 using FluentValidation;
 using Hall_rent.Controllers;
 using Hall_rent.Dto;
+using Hall_rent.Mappers;
 using Hall_rent.Request;
 using Hall_rent.Response;
-using Hall_rent.Service;
+using Hall_rent.Service.Interface;
 using Hall_rent.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -44,14 +45,15 @@ public sealed class FavorControllerTests
     {
         var id = Guid.NewGuid();
         var request = new FavorCreateRequest { Name = "Projector", Price = 50m };
-        _service.Setup(x => x.AddFavor(request)).ReturnsAsync(new FavorCreateResponse(id));
+        var dto = FavorMapper.ToDto(request);
+        _service.Setup(x => x.AddFavor(dto)).ReturnsAsync(new FavorCreateResponse(id));
 
         var result = await Sut().CreateFavors(request);
 
         var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         created.ActionName.Should().Be(nameof(FavorController.CreateFavors));
-        created.Value.Should().Be(id);
-        _service.Verify(x => x.AddFavor(request), Times.Once);
+        created.Value.Should().Be(new FavorCreateResponse(id));
+        _service.Verify(x => x.AddFavor(dto), Times.Once);
     }
 
     [Fact]
@@ -62,7 +64,7 @@ public sealed class FavorControllerTests
         var act = () => Sut().CreateFavors(request);
 
         await act.Should().ThrowAsync<ValidationException>();
-        _service.Verify(x => x.AddFavor(It.IsAny<FavorCreateRequest>()), Times.Never);
+        _service.Verify(x => x.AddFavor(It.IsAny<FavorCreateDto>()), Times.Never);
     }
 
     [Fact]
@@ -76,16 +78,5 @@ public sealed class FavorControllerTests
         result.Should().BeOfType<OkResult>();
         _service.Verify(x => x.UpdateFavor(It.Is<UpdateFavorDto>(d =>
             d.Id == id && d.Name == "New" && d.Price == 25m)), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteFavors_ShouldPassIdToService()
-    {
-        var id = Guid.NewGuid();
-
-        var result = await Sut().DeleteFavors(id);
-
-        result.Should().BeOfType<OkResult>();
-        _service.Verify(x => x.DeleteFavor(id), Times.Once);
     }
 }

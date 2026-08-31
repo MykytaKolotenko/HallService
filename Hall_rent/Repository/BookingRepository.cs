@@ -1,5 +1,6 @@
 using Hall_rent.Context;
 using Hall_rent.Entity;
+using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,6 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
 
     public async Task<bool> IsHallAvailableAsync(Guid hallId, DateTime startAt, DateTime endAt)
     {
-        return !await _dbSet.AnyAsync(b => b.HallId == hallId && b.StartAt < endAt && b.EndAt > startAt);
+        return !await _dbSet.AnyAsync(Specification.OverlapsBooking(hallId, startAt, endAt));
     }
 }

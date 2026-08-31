@@ -1,5 +1,3 @@
-// Exceptions/SqlErrorClassifier.cs
-
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,22 +1,27 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
 using Hall_rent.Request;
+using Hall_rent.Validation;
 using Xunit;
 
 namespace Hall_rent.Tests.Validators;
 
 public sealed class HallSearchRequestValidatorTests
 {
-    private readonly DateTime _now = new(2030, 1, 10, 12, 0, 0, DateTimeKind.Utc);
-    private HallSearchRequestValidator Validator() => new(new FixedClock(_now));
+    private readonly DateTime _now = new DateTime(2030, 1, 10, 12, 0, 0, DateTimeKind.Utc);
+
+    private HallSearchRequestValidator Validator()
+    {
+        return new HallSearchRequestValidator(new FixedClock(_now));
+    }
 
     [Fact]
     public void ShouldAcceptValidFutureInterval()
     {
         var request = new HallSearchRequest
         {
-            StartAt = _now.AddHours(1),
-            EndAt = _now.AddHours(2),
+            From = _now.AddHours(1),
+            To = _now.AddHours(2),
             Persons = 10
         };
 
@@ -28,13 +33,13 @@ public sealed class HallSearchRequestValidatorTests
     {
         var request = new HallSearchRequest
         {
-            StartAt = _now.AddHours(3),
-            EndAt = _now.AddHours(2),
+            From = _now.AddHours(3),
+            To = _now.AddHours(2),
             Persons = 10
         };
 
         Validator().TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.StartAt);
+            .ShouldHaveValidationErrorFor(x => x.From);
     }
 
     [Fact]
@@ -42,13 +47,13 @@ public sealed class HallSearchRequestValidatorTests
     {
         var request = new HallSearchRequest
         {
-            StartAt = _now.AddHours(-3),
-            EndAt = _now.AddHours(-2),
+            From = _now.AddHours(-3),
+            To = _now.AddHours(-2),
             Persons = 10
         };
 
         Validator().TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.EndAt);
+            .ShouldHaveValidationErrorFor(x => x.To);
     }
 
     [Fact]
@@ -56,8 +61,8 @@ public sealed class HallSearchRequestValidatorTests
     {
         var request = new HallSearchRequest
         {
-            StartAt = _now.AddHours(1),
-            EndAt = _now.AddHours(2),
+            From = _now.AddHours(1),
+            To = _now.AddHours(2),
             Persons = 0
         };
 

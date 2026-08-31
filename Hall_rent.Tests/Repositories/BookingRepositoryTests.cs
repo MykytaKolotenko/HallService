@@ -17,8 +17,8 @@ public sealed class BookingRepositoryTests
         var booking = new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hallId, Price = 100m,
-            StartAt = DateTime.UtcNow.AddDays(1),
-            EndAt = DateTime.UtcNow.AddDays(1).AddHours(2),
+            From = DateTime.UtcNow.AddDays(1),
+            To = DateTime.UtcNow.AddDays(1).AddHours(2),
             Favors = []
         };
 
@@ -39,7 +39,7 @@ public sealed class BookingRepositoryTests
         db.Bookings.Add(new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hallId, Price = 100m,
-            StartAt = start, EndAt = end, Favors = []
+            From = start, To = end, Favors = []
         });
         await db.SaveChangesAsync();
 
@@ -56,7 +56,7 @@ public sealed class BookingRepositoryTests
         db.Bookings.Add(new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hallId, Price = 100m,
-            StartAt = start, EndAt = start.AddHours(2), Favors = []
+            From = start, To = start.AddHours(2), Favors = []
         });
         await db.SaveChangesAsync();
 
@@ -74,7 +74,7 @@ public sealed class BookingRepositoryTests
         db.Bookings.Add(new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = otherHallId, Price = 100m,
-            StartAt = start, EndAt = start.AddHours(2), Favors = []
+            From = start, To = start.AddHours(2), Favors = []
         });
         await db.SaveChangesAsync();
 

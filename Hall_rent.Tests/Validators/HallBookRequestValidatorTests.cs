@@ -14,8 +14,8 @@ public sealed class HallBookRequestValidatorTests
     {
         return new HallBookRequest
         {
-            StartAt = DateTime.UtcNow.AddHours(2),
-            EndAt = DateTime.UtcNow.AddHours(4),
+            From = DateTime.UtcNow.AddHours(2),
+            To = DateTime.UtcNow.AddHours(4),
             Persons = 5,
             Favors = []
         };
@@ -31,10 +31,10 @@ public sealed class HallBookRequestValidatorTests
     public void ShouldRejectStartAtInThePast()
     {
         var request = Valid();
-        request.StartAt = DateTime.UtcNow.AddMinutes(-1);
+        request = request with { From = DateTime.UtcNow.AddMinutes(-1) };
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.StartAt)
+            .ShouldHaveValidationErrorFor(x => x.From)
             .WithErrorMessage("StartAt must be in the future.");
     }
 
@@ -42,10 +42,10 @@ public sealed class HallBookRequestValidatorTests
     public void ShouldRejectEndAtBeforeStartAt()
     {
         var request = Valid();
-        request.EndAt = request.StartAt.AddMinutes(-1);
+        request = request with { From = request.To.AddMinutes(1) };
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.EndAt)
+            .ShouldHaveValidationErrorFor(x => x.To)
             .WithErrorMessage("EndAt must be greater than StartAt.");
     }
 
@@ -53,7 +53,7 @@ public sealed class HallBookRequestValidatorTests
     public void ShouldRejectZeroPersons()
     {
         var request = Valid();
-        request.Persons = 0;
+        request = request with { Persons = 0 };
 
         _validator.TestValidate(request)
             .ShouldHaveValidationErrorFor(x => x.Persons);
@@ -63,7 +63,7 @@ public sealed class HallBookRequestValidatorTests
     public void ShouldRejectEmptyFavorId()
     {
         var request = Valid();
-        request.Favors = [Guid.Empty];
+        request = request with { Favors = [Guid.Empty] };
 
         _validator.Validate(request).IsValid.Should().BeFalse();
     }
@@ -78,7 +78,7 @@ public sealed class HallBookRequestValidatorTests
     public void ShouldNotThrow_WhenFavorsAreNull()
     {
         var request = Valid();
-        request.Favors = null!;
+        request = request with { Favors = null! };
 
         var result = _validator.Validate(request);
 

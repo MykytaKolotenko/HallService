@@ -1,8 +1,8 @@
 using FluentValidation;
-using Hall_rent.Dto;
+using Hall_rent.Mappers;
 using Hall_rent.Request;
 using Hall_rent.Response;
-using Hall_rent.Service;
+using Hall_rent.Service.Interface;
 using Hall_rent.Validation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,29 +39,16 @@ public class FavorController : ControllerBase
     public async Task<ActionResult<FavorCreateResponse>> CreateFavors([FromBody] FavorCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        var response = await _favorService.AddFavor(request);
+        var response = await _favorService.AddFavor(FavorMapper.ToDto(request));
 
-        return CreatedAtAction(nameof(CreateFavors), response);
+        return Created(nameof(CreateFavors), response);
     }
 
     [HttpPatch("{id}", Name = "UpdateFavor")]
     public async Task<IActionResult> UpdateFavors(Guid id, [FromBody] FavorUpdateRequest request)
     {
         await ValidatorUtils.Validate(_updateValidator, request);
-        await _favorService.UpdateFavor(new UpdateFavorDto
-        {
-            Id = id,
-            Name = request.Name,
-            Price = request.Price
-        });
-
-        return Ok();
-    }
-
-    [HttpDelete("{id}", Name = "DeleteFavor")]
-    public async Task<IActionResult> DeleteFavors(Guid id)
-    {
-        await _favorService.DeleteFavor(id);
+        await _favorService.UpdateFavor(FavorMapper.ToDto(request, id));
 
         return Ok();
     }

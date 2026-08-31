@@ -3,8 +3,10 @@ using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
 using Hall_rent.Helpers;
+using Hall_rent.Mappers;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Response;
+using Hall_rent.Service.Interface;
 
 namespace Hall_rent.Service;
 
@@ -13,61 +15,59 @@ public sealed class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepository;
     private readonly IFavorResolver _favorResolver;
     private readonly IHallRepository _hallRepository;
-    private readonly IHallUnitOfWork _unitOfWork;
+    private readonly ITransactionRunner _transactionRunner;
+    private readonly IUnitOfWork _unitOfWork;
 
     public BookingService(
         IHallRepository hallRepository,
         IBookingRepository bookingRepository,
-        IHallUnitOfWork unitOfWork,
-        IFavorResolver favorResolver)
+        IUnitOfWork unitOfWork,
+        IFavorResolver favorResolver,
+        ITransactionRunner transactionRunner)
     {
         _hallRepository = hallRepository;
         _bookingRepository = bookingRepository;
         _unitOfWork = unitOfWork;
         _favorResolver = favorResolver;
+        _transactionRunner = transactionRunner;
     }
 
     public Task<HallBookResponse> BookAsync(BookHallDto request)
     {
-        return _unitOfWork.RunInTransactionAsync(
+        return _transactionRunner.RunInTransactionAsync(
             IsolationLevel.Serializable,
-            () => BookInternalAsync(request),
-            $"BookHall({request.HallId})");
+            () => BookInternalAsync(request));
     }
 
     private async Task<HallBookResponse> BookInternalAsync(BookHallDto request)
     {
-        var hall = await _hallRepository.GetByIdAsync(request.HallId)
-                   ?? throw new NotFoundException(
-                       $"Hall {request.HallId} not found");
+        var hall = await _hallRepository.GetByIdWithFavorsAsync(request.HallId) ?? throw new NotFoundException($"Hall {request.HallId} not found");
 
         if (request.Persons > hall.Persons)
-            throw new HallCapacityExceededException(
-                hall.Id,
-                hall.Persons,
-                request.Persons);
+            throw new HallCapacityExceededException(hall.Id, hall.Persons, request.Persons);
 
-        if (!await _bookingRepository.IsHallAvailableAsync(
-                request.HallId,
-                request.StartAt,
-                request.EndAt))
-            throw new HallNotAvailableException(
-                request.HallId,
-                request.StartAt,
-                request.EndAt);
+        var available = await _bookingRepository.IsHallAvailableAsync(hall.Id, request.StartAt, request.EndAt);
 
-        var favors = await _favorResolver.ResolveOrThrowAsync(request.Favors?.Distinct().ToList());
+        if (!available) throw new HallNotAvailableException(hall.Id, request.StartAt, request.EndAt);
+
+        var favorIds = request.Favors.Distinct().ToList();
+        var offeredFavorIds = hall.Favors.Select(x => x.FavorId).ToHashSet();
+        var notOfferedFavorIds = favorIds.Where(id => !offeredFavorIds.Contains(id)).ToList();
+
+        if (notOfferedFavorIds.Count > 0)
+            throw new FavorsNotOfferedException(hall.Id, notOfferedFavorIds);
+
+        var favors = await _favorResolver.ResolveOrThrowAsync(favorIds);
 
         var booking = new HallBookingEntity
         {
             HallId = hall.Id,
-            StartAt = request.StartAt,
-            EndAt = request.EndAt,
-            Favors = favors.Select(x => x.Id).ToList(),
-            Price = FavorCalculator.Calculate(
-                hall.Price,
-                FavorMapper.ToDto(favors))
+            From = request.StartAt,
+            To = request.EndAt,
+            Price = FavorCalculator.Calculate(hall.Price, favors.Select(FavorMapper.ToDto).ToList())
         };
+
+        booking.Favors = favors.Select(f => FavorMapper.ToEntity(f, booking)).ToList();
 
         await _bookingRepository.AddAsync(booking);
         await _unitOfWork.SaveChangesAsync();

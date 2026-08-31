@@ -11,8 +11,9 @@ public sealed class CustomExceptionHandlingMiddleware
         _next = next;
     }
 
-    // ExceptionDispatcher и ILogger — scoped/transient-совместимые сервисы, поэтому получаем их
-    // через параметры InvokeAsync (middleware сам по себе singleton), а не через конструктор.
+    // ExceptionDispatcher and ILogger are scoped/transient-compatible services,
+    // so we obtain them through InvokeAsync parameters (since the middleware itself is a singleton),
+    // rather than through the constructor.
     public async Task InvokeAsync(
         HttpContext context,
         ExceptionDispatcher dispatcher,
@@ -24,7 +25,7 @@ public sealed class CustomExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            ExceptionResolution resolution = dispatcher.Resolve(ex, context.Request.Path);
+            var resolution = dispatcher.Resolve(ex, context.Request.Path);
 
             logger.Log(
                 resolution.LogLevel,
@@ -35,7 +36,6 @@ public sealed class CustomExceptionHandlingMiddleware
 
             if (context.Response.HasStarted)
             {
-                // Тело ответа уже начало отправляться (например, стриминг) — статус/тело не переписать.
                 logger.LogWarning(
                     "Response already started, cannot write error body for {Path}",
                     context.Request.Path);

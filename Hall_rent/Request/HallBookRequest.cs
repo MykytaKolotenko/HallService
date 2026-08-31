@@ -1,9 +1,11 @@
+using Hall_rent.Request.Interface;
+
 namespace Hall_rent.Request;
 
-public record HallBookRequest
+public record HallBookRequest : IDateRange
 {
-    public DateTime StartAt { get; set; }
-    public DateTime EndAt { get; set; }
-    public List<Guid> Favors { get; set; }
-    public int Persons { get; set; }
+    public List<Guid> Favors { get; init; }
+    public int Persons { get; init; }
+    public DateTime From { get; init; }
+    public DateTime To { get; init; }
 }

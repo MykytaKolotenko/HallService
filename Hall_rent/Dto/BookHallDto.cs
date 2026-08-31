@@ -2,11 +2,11 @@ namespace Hall_rent.Dto;
 
 public record BookHallDto
 {
-    public Guid HallId { get; set; }
-    public List<Guid> Favors { get; set; }
+    public Guid HallId { get; init; }
+    public List<Guid> Favors { get; init; } = [];
 
-    public int Persons { get; set; }
+    public int Persons { get; init; }
 
-    public DateTime StartAt { get; set; }
-    public DateTime EndAt { get; set; }
+    public DateTime StartAt { get; init; }
+    public DateTime EndAt { get; init; }
 }

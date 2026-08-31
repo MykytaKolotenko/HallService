@@ -1,22 +1,22 @@
 using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
-using Hall_rent.Helpers;
+using Hall_rent.Mappers;
 using Hall_rent.Repository.Interfaces;
-using Hall_rent.Request;
 using Hall_rent.Response;
+using Hall_rent.Service.Interface;
 
 namespace Hall_rent.Service;
 
 public class FavorService : IFavorService
 {
     private readonly IFavorRepository _favorRepository;
-    private readonly IHallUnitOfWork _hallUnitOfWork;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public FavorService(IFavorRepository favorRepository, IHallUnitOfWork hallUnitOfWork)
+    public FavorService(IFavorRepository favorRepository, IUnitOfWork unitOfWork)
     {
         _favorRepository = favorRepository;
-        _hallUnitOfWork = hallUnitOfWork;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<List<FavorResponse>> GetFavors()
@@ -26,7 +26,7 @@ public class FavorService : IFavorService
         return FavorMapper.ToResponse(favors);
     }
 
-    public async Task<FavorCreateResponse> AddFavor(FavorCreateRequest request)
+    public async Task<FavorCreateResponse> AddFavor(FavorCreateDto request)
     {
         var favor = new FavorEntity
         {
@@ -35,7 +35,7 @@ public class FavorService : IFavorService
         };
 
         await _favorRepository.AddAsync(favor);
-        await _hallUnitOfWork.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new FavorCreateResponse(favor.Id);
     }
@@ -47,15 +47,7 @@ public class FavorService : IFavorService
         favorEntity.Name = request.Name;
         favorEntity.Price = request.Price;
 
-        await _hallUnitOfWork.SaveChangesAsync();
-    }
-
-    public async Task DeleteFavor(Guid id)
-    {
-        var favor = await GetFavor(id);
-
-        _favorRepository.Remove(favor);
-        await _hallUnitOfWork.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     private async Task<FavorEntity> GetFavor(Guid favorId)

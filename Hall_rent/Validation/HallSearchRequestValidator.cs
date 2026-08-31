@@ -2,17 +2,13 @@ using FluentValidation;
 using Hall_rent.Helpers;
 using Hall_rent.Request;
 
+namespace Hall_rent.Validation;
+
 public class HallSearchRequestValidator : AbstractValidator<HallSearchRequest>
 {
     public HallSearchRequestValidator(IClock clock)
     {
-        RuleFor(x => x.StartAt)
-            .LessThan(x => x.EndAt)
-            .WithMessage("StartAt must be earlier than EndAt.");
-
-        RuleFor(x => x.EndAt)
-            .GreaterThan(clock.UtcNow)
-            .WithMessage("End date must be in the future.");
+        this.ApplyDateRules(clock);
 
         RuleFor(x => x.Persons)
             .GreaterThan(0)

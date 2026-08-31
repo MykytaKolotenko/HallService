@@ -25,7 +25,7 @@ public sealed class HallRepositoryTests
         await repository.AddAsync(hall);
         await db.SaveChangesAsync();
 
-        var result = await repository.GetByIdAsync(hall.Id);
+        var result = await repository.GetByIdWithFavorsAsync(hall.Id);
         result.Should().NotBeNull();
         result!.Name.Should().Be("Main Hall");
         result.Persons.Should().Be(20);
@@ -38,7 +38,7 @@ public sealed class HallRepositoryTests
         await using var db = DbContextFactory.CreateInMemory();
         var repository = new HallRepository(db);
 
-        (await repository.GetByIdAsync(Guid.NewGuid())).Should().BeNull();
+        (await repository.GetByIdWithFavorsAsync(Guid.NewGuid())).Should().BeNull();
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class HallRepositoryTests
         repository.Remove(hall);
         await db.SaveChangesAsync();
 
-        (await repository.GetByIdAsync(hall.Id)).Should().BeNull();
+        (await repository.GetByIdWithFavorsAsync(hall.Id)).Should().BeNull();
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public sealed class HallRepositoryTests
         {
             Id = Guid.NewGuid(),
             HallId = booked.Id,
-            StartAt = start.AddMinutes(30),
-            EndAt = end.AddHours(1),
+            From = start.AddMinutes(30),
+            To = end.AddHours(1),
             Price = 100m,
             Favors = []
         });
@@ -111,7 +111,7 @@ public sealed class HallRepositoryTests
         db.Bookings.Add(new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hall.Id,
-            StartAt = previousStart, EndAt = previousEnd,
+            From = previousStart, To = previousEnd,
             Price = 100m, Favors = []
         });
         await db.SaveChangesAsync();
@@ -132,7 +132,7 @@ public sealed class HallRepositoryTests
         db.Bookings.Add(new HallBookingEntity
         {
             Id = Guid.NewGuid(), HallId = hall.Id,
-            StartAt = existingStart, EndAt = existingStart.AddHours(2),
+            From = existingStart, To = existingStart.AddHours(2),
             Price = 100m, Favors = []
         });
         await db.SaveChangesAsync();

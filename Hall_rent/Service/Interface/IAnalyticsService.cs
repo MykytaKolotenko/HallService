@@ -6,5 +6,5 @@ namespace Hall_rent.Service.Interface;
 public interface IAnalyticsService
 {
     public Task<RevenueReportResponse> GetRevenueReportAsync(DateRangeDto request);
-    public Task<FavorsReportResponse> GetTopFavorsAsync(DateRangeDto request, int limit);
+    public Task<FavorReportResponse> GetTopFavorsAsync(DateRangeDto request, int limit);
 }

@@ -14,12 +14,12 @@ public class AnalyticsRepository : IAnalyticsRepository
         _context = context;
     }
 
-    public async Task<List<HallRevenueRow>> GetRevenueByPeriodAsync(DateTime from, DateTime to)
+    public async Task<List<HallRevenueRow>> GetByPeriodAsync(DateTime from, DateTime to)
     {
         return await _context.Bookings
             .AsNoTracking()
-            .Where(b => b.StartAt >= from && b.StartAt < to)
-            .GroupBy(b => b.StartAt.Date)
+            .Where(b => b.From >= from && b.From < to)
+            .GroupBy(b => b.From.Date)
             .Select(g => new HallRevenueRow(g.Key, g.Sum(b => b.Price), g.Count()))
             .OrderBy(r => r.Day)
             .ToListAsync();
@@ -29,10 +29,10 @@ public class AnalyticsRepository : IAnalyticsRepository
     {
         var favorCounts = _context.Bookings
             .AsNoTracking()
-            .Where(b => b.StartAt >= from && b.StartAt < to)
+            .Where(b => b.From >= from && b.From < to)
             .SelectMany(b => b.Favors, (booking, favorId) => favorId)
             .GroupBy(favorId => favorId)
-            .Select(g => new FavorCount(g.Key, g.Count()));
+            .Select(g => new FavorCount(g.Key.FavorId, g.Count()));
 
         return await JoinWithFavorDetails(favorCounts)
             .OrderByDescending(r => r.BookingsCount)
@@ -46,7 +46,7 @@ public class AnalyticsRepository : IAnalyticsRepository
             _context.Favors,
             fc => fc.FavorId,
             favor => favor.Id,
-            (fc, favor) => new FavorRevenueRow(favor.Id, fc.TimesBooked, favor.Name, favor.Price));
+            (fc, favor) => new FavorRevenueRow(favor.Id, fc.TimesBooked, favor.Name, fc.TimesBooked * favor.Price));
     }
 
     private record FavorCount(Guid FavorId, int TimesBooked);

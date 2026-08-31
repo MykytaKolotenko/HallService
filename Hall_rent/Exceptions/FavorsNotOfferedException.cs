@@ -5,7 +5,7 @@ namespace Hall_rent.Exceptions;
 public class FavorsNotOfferedException : AppException
 {
     public FavorsNotOfferedException(Guid hallId, IEnumerable<Guid> favourIds)
-        : base($"Hall {hallId} does not offer favours: {string.Join(", ", favourIds)}")
+        : base($"Hall {hallId} does not offer favors: {string.Join(", ", favourIds)}")
     {
         HallId = hallId;
     }

@@ -28,9 +28,4 @@ public class FavorRepository(AppDbContext context) : IFavorRepository
     {
         return await _dbSet.Where(x => ids.Contains(x.Id)).ToListAsync();
     }
-
-    public void Remove(FavorEntity favor)
-    {
-        _dbSet.Remove(favor);
-    }
 }

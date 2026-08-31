@@ -1,5 +1,3 @@
-// Exceptions/AppException.cs
-
 using System.Net;
 
 namespace Hall_rent.Exceptions;

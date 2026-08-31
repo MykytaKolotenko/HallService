@@ -1,13 +1,14 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
 using Hall_rent.Request;
+using Hall_rent.Validation;
 using Xunit;
 
 namespace Hall_rent.Tests.Validators;
 
 public sealed class FavorUpdateRequestValidatorTests
 {
-    private readonly FavorUpdateRequestValidator _validator = new();
+    private readonly FavorUpdateRequestValidator _validator = new FavorUpdateRequestValidator();
 
     [Fact]
     public void ShouldAcceptValidRequest()

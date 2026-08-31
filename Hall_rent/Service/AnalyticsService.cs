@@ -16,7 +16,7 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<RevenueReportResponse> GetRevenueReportAsync(DateRangeDto request)
     {
-        var rowReport = await _analyticsRepository.GetRevenueByPeriodAsync(request.From, request.To);
+        var rowReport = await _analyticsRepository.GetByPeriodAsync(request.From, request.To);
         var totalBookings = rowReport.Sum(x => x.BookingsCount);
         var totalRevenue = rowReport.Sum(x => x.Revenue);
         var report = rowReport.Select(r => new HallRevenueResponse
@@ -30,7 +30,7 @@ public class AnalyticsService : IAnalyticsService
         return new RevenueReportResponse { TotalRevenue = totalRevenue, TotalBookings = totalBookings, RevenuePerDay = report };
     }
 
-    public async Task<FavorsReportResponse> GetTopFavorsAsync(DateRangeDto request, int limit = 10)
+    public async Task<FavorReportResponse> GetTopFavorsAsync(DateRangeDto request, int limit = 10)
     {
         var rowReport = await _analyticsRepository.GetTopFavorsAsync(request.From, request.To, limit);
         var totalBookings = rowReport.Sum(x => x.BookingsCount);
@@ -44,6 +44,6 @@ public class AnalyticsService : IAnalyticsService
             }
         ).ToList();
 
-        return new FavorsReportResponse { Revenue = totalRevenue, BookingsCount = totalBookings, Favors = report };
+        return new FavorReportResponse { Revenue = totalRevenue, BookingsCount = totalBookings, Favors = report };
     }
 }

@@ -8,5 +8,4 @@ public interface IFavorRepository
     Task<FavorEntity?> GetByIdAsync(Guid id);
     Task<List<FavorEntity>> GetAllAsync();
     Task<List<FavorEntity>> GetByIdsAsync(List<Guid> ids);
-    void Remove(FavorEntity favor);
 }

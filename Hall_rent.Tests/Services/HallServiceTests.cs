@@ -2,9 +2,9 @@ using FluentAssertions;
 using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
-using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Service;
+using Hall_rent.Service.Interface;
 using Moq;
 using Xunit;
 
@@ -14,7 +14,7 @@ public sealed class HallServiceTests
 {
     private readonly Mock<IFavorResolver> _favorResolver = new Mock<IFavorResolver>();
     private readonly Mock<IHallRepository> _repository = new Mock<IHallRepository>();
-    private readonly Mock<IHallUnitOfWork> _unitOfWork = new Mock<IHallUnitOfWork>();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new Mock<IUnitOfWork>();
 
     private HallService Sut()
     {
@@ -48,7 +48,7 @@ public sealed class HallServiceTests
             .Setup(x => x.SaveChangesAsync(default(CancellationToken)))
             .Returns(Task.CompletedTask);
 
-        var result = await Sut().AddHall(dto);
+        var result = await Sut().CreateHall(dto);
 
         result.Should().NotBe(Guid.Empty);
 
@@ -81,7 +81,7 @@ public sealed class HallServiceTests
             .Setup(x => x.ResolveOrThrowAsync(It.IsAny<IEnumerable<Guid>>()))
             .ReturnsAsync([]);
 
-        await Sut().AddHall(dto);
+        await Sut().CreateHall(dto);
 
         _repository.Verify(x => x.AddAsync(It.Is<HallEntity>(h => h.Favors.Count == 0)), Times.Once);
     }
@@ -105,7 +105,7 @@ public sealed class HallServiceTests
         _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken)))
             .ThrowsAsync(new UniqueConstraintException("Halls.Name", dbException));
 
-        var act = () => Sut().AddHall(dto);
+        var act = () => Sut().CreateHall(dto);
 
         var ex = await act.Should().ThrowAsync<HallNameAlreadyExistsException>();
         ex.Which.Name.Should().Be(dto.Name);
@@ -126,7 +126,7 @@ public sealed class HallServiceTests
             Persons = 10,
             Favors = [favorId]
         };
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(hall);
+        _repository.Setup(x => x.GetByIdWithFavorsAsync(id)).ReturnsAsync(hall);
         _favorResolver
             .Setup(x => x.ResolveOrThrowAsync(It.IsAny<IEnumerable<Guid>>()))
             .ReturnsAsync([favor]);
@@ -143,7 +143,7 @@ public sealed class HallServiceTests
     public async Task UpdateHall_ShouldThrowNotFound_AndNotSave_WhenMissing()
     {
         var id = Guid.NewGuid();
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((HallEntity?)null);
+        _repository.Setup(x => x.GetByIdWithFavorsAsync(id)).ReturnsAsync((HallEntity?)null);
 
         var act = () => Sut().UpdateHall(new UpdateHallDto
         {
@@ -163,7 +163,7 @@ public sealed class HallServiceTests
     {
         var id = Guid.NewGuid();
         var hall = new HallEntity { Id = id, Name = "Hall", Price = 100m, Persons = 5 };
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(hall);
+        _repository.Setup(x => x.GetByIdWithFavorsAsync(id)).ReturnsAsync(hall);
 
         await Sut().DeleteHall(id);
 
@@ -175,7 +175,7 @@ public sealed class HallServiceTests
     public async Task DeleteHall_ShouldThrowNotFound_AndNotRemove_WhenMissing()
     {
         var id = Guid.NewGuid();
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((HallEntity?)null);
+        _repository.Setup(x => x.GetByIdWithFavorsAsync(id)).ReturnsAsync((HallEntity?)null);
 
         var act = () => Sut().DeleteHall(id);
 
@@ -191,17 +191,17 @@ public sealed class HallServiceTests
         var second = Guid.NewGuid();
         var request = new HallSearchDto
         {
-            StartAt = DateTime.UtcNow.AddDays(1),
-            EndAt = DateTime.UtcNow.AddDays(1).AddHours(2),
+            From = DateTime.UtcNow.AddDays(1),
+            To = DateTime.UtcNow.AddDays(1).AddHours(2),
             Persons = 10
         };
-        _repository.Setup(x => x.FindAvailableHallsAsync(request.StartAt, request.EndAt, request.Persons))
+        _repository.Setup(x => x.FindAvailableHallsAsync(request.From, request.To, request.Persons))
             .ReturnsAsync([
                 new HallEntity { Id = first },
                 new HallEntity { Id = second }
             ]);
 
-        var result = await Sut().FindAvailableHallIdsAsync(request);
+        var result = await Sut().SearchAvailableHallIdsAsync(request);
 
         result.Halls.Should().Equal(first, second);
     }
@@ -211,14 +211,14 @@ public sealed class HallServiceTests
     {
         var request = new HallSearchDto
         {
-            StartAt = DateTime.UtcNow.AddDays(1),
-            EndAt = DateTime.UtcNow.AddDays(1).AddHours(2),
+            From = DateTime.UtcNow.AddDays(1),
+            To = DateTime.UtcNow.AddDays(1).AddHours(2),
             Persons = 10
         };
-        _repository.Setup(x => x.FindAvailableHallsAsync(request.StartAt, request.EndAt, request.Persons))
+        _repository.Setup(x => x.FindAvailableHallsAsync(request.From, request.To, request.Persons))
             .ReturnsAsync([]);
 
-        var act = () => Sut().FindAvailableHallIdsAsync(request);
+        var act = () => Sut().SearchAvailableHallIdsAsync(request);
 
         await act.Should().ThrowAsync<NotFoundException>();
     }

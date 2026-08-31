@@ -1,8 +1,9 @@
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
 using Hall_rent.Repository.Interfaces;
+using Hall_rent.Service.Interface;
 
-namespace Hall_rent.Helpers;
+namespace Hall_rent.Service;
 
 public class FavorResolver : IFavorResolver
 {

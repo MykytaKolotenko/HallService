@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Hall_rent.Entity;
-using Hall_rent.Helpers;
+using Hall_rent.Mappers;
 using Xunit;
 
 namespace Hall_rent.Tests.Helpers;
@@ -13,10 +13,10 @@ public sealed class FavorMapperTests
         var id = Guid.NewGuid();
         var entities = new List<FavorEntity>
         {
-            new() { Id = id, Name = "Projector", Price = 50m }
+            new FavorEntity { Id = id, Name = "Projector", Price = 50m }
         };
 
-        var result = FavorMapper.ToDto(entities);
+        var result = entities.Select(FavorMapper.ToDto).ToList();
 
         result.Should().ContainSingle();
         result[0].Id.Should().Be(id);
@@ -30,7 +30,7 @@ public sealed class FavorMapperTests
         var id = Guid.NewGuid();
         var entities = new List<FavorEntity>
         {
-            new() { Id = id, Name = "Parking", Price = 20m }
+            new FavorEntity { Id = id, Name = "Parking", Price = 20m }
         };
 
         var result = FavorMapper.ToResponse(entities);

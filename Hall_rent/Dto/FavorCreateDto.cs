@@ -1,8 +1,7 @@
 namespace Hall_rent.Dto;
 
-public record FavorDto
+public record FavorCreateDto()
 {
-    public Guid Id { get; init; }
     public string Name { get; init; }
     public decimal Price { get; init; }
-}
+};

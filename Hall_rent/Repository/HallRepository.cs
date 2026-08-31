@@ -1,5 +1,6 @@
 using Hall_rent.Context;
 using Hall_rent.Entity;
+using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,14 +17,16 @@ public class HallRepository : IHallRepository
         _dbSet = context.Set<HallEntity>();
     }
 
+    public async Task<HallEntity?> GetByIdWithFavorsAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(h => h.Favors)
+            .FirstOrDefaultAsync(x => x.Id == id);
+    }
+
     public async Task AddAsync(HallEntity hall)
     {
         await _dbSet.AddAsync(hall);
-    }
-
-    public async Task<HallEntity?> GetByIdAsync(Guid id)
-    {
-        return await _dbSet.Where(x => x.Id == id).FirstOrDefaultAsync();
     }
 
     public void Remove(HallEntity hall)
@@ -31,21 +34,11 @@ public class HallRepository : IHallRepository
         _dbSet.Remove(hall);
     }
 
-    public async Task<List<HallEntity>> FindAvailableHallsAsync(DateTime startAt, DateTime endAt, int persons)
+    public async Task<List<HallEntity>> FindAvailableHallsAsync(DateTime from, DateTime to, int persons)
     {
         return await _dbSet
             .Where(h => h.Persons >= persons)
-            .Where(h => !_context.Set<HallBookingEntity>().Any(b =>
-                b.HallId == h.Id &&
-                b.StartAt < endAt &&
-                b.EndAt > startAt))
+            .Where(h => !_context.Set<HallBookingEntity>().Any(Specification.OverlapsBooking(h.Id, from, to)))
             .ToListAsync();
-    }
-
-    public async Task<HallEntity?> GetByIdWithFavorsAsync(Guid id)
-    {
-        return await _dbSet
-            .Include(h => h.Favors)
-            .FirstOrDefaultAsync(x => x.Id == id);
     }
 }

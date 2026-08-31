@@ -23,7 +23,8 @@ public static class InfrastructureDi
         services.AddExceptions();
         services.AddServices();
 
-        services.AddScoped<IHallUnitOfWork, HallUnitOfWork>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ITransactionRunner, TransactionRunner>();
 
         return services;
     }
@@ -31,13 +32,6 @@ public static class InfrastructureDi
     private static void AddValidation(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<HallCreateRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<FavorUpdateRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<FavorCreateRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<HallCreateRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<HallUpdateRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<HallBookRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<HallSearchRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<DateRangeRequestValidator>();
     }
 
     private static void AddRepository(this IServiceCollection services)

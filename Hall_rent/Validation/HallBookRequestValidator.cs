@@ -8,14 +8,7 @@ public class HallBookRequestValidator : AbstractValidator<HallBookRequest>
 {
     public HallBookRequestValidator(IClock clock)
     {
-        RuleFor(x => x.StartAt)
-            .GreaterThan(clock.UtcNow)
-            .WithMessage("StartAt must be in the future.");
-
-        RuleFor(x => x.EndAt)
-            .NotEmpty()
-            .GreaterThan(x => x.StartAt)
-            .WithMessage("EndAt must be greater than StartAt.");
+        this.ApplyDateRules(clock);
 
         RuleFor(x => x.Persons)
             .GreaterThan(0)

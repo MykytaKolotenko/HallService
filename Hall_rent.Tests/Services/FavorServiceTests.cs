@@ -2,6 +2,7 @@ using FluentAssertions;
 using Hall_rent.Dto;
 using Hall_rent.Entity;
 using Hall_rent.Exceptions;
+using Hall_rent.Mappers;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Request;
 using Hall_rent.Service;
@@ -13,7 +14,7 @@ namespace Hall_rent.Tests.Services;
 public sealed class FavorServiceTests
 {
     private readonly Mock<IFavorRepository> _repository = new Mock<IFavorRepository>();
-    private readonly Mock<IHallUnitOfWork> _unitOfWork = new Mock<IHallUnitOfWork>();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new Mock<IUnitOfWork>();
 
     private FavorService Sut()
     {
@@ -52,6 +53,8 @@ public sealed class FavorServiceTests
             Name = "Projector",
             Price = 50m
         };
+        var dto = FavorMapper.ToDto(request);
+
 
         _repository
             .Setup(x => x.AddAsync(It.IsAny<FavorEntity>()))
@@ -62,7 +65,7 @@ public sealed class FavorServiceTests
             .Setup(x => x.SaveChangesAsync(default(CancellationToken)))
             .Returns(Task.CompletedTask);
 
-        var result = await Sut().AddFavor(request);
+        var result = await Sut().AddFavor(dto);
 
         result.Should().NotBe(Guid.Empty);
 
@@ -108,32 +111,6 @@ public sealed class FavorServiceTests
 
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"Favor {id} not found");
-        _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Never);
-    }
-
-    [Fact]
-    public async Task DeleteFavor_ShouldRemoveAndSave()
-    {
-        var id = Guid.NewGuid();
-        var entity = new FavorEntity { Id = id, Name = "Parking", Price = 20m };
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(entity);
-
-        await Sut().DeleteFavor(id);
-
-        _repository.Verify(x => x.Remove(entity), Times.Once);
-        _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteFavor_ShouldThrowNotFound_AndNotRemove_WhenMissing()
-    {
-        var id = Guid.NewGuid();
-        _repository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((FavorEntity?)null);
-
-        var act = () => Sut().DeleteFavor(id);
-
-        await act.Should().ThrowAsync<NotFoundException>();
-        _repository.Verify(x => x.Remove(It.IsAny<FavorEntity>()), Times.Never);
         _unitOfWork.Verify(x => x.SaveChangesAsync(default(CancellationToken)), Times.Never);
     }
 }

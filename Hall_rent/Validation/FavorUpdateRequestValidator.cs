@@ -1,18 +1,14 @@
 using FluentValidation;
 using Hall_rent.Request;
 
+namespace Hall_rent.Validation;
+
 public class FavorUpdateRequestValidator : AbstractValidator<FavorUpdateRequest>
 {
     public FavorUpdateRequestValidator()
     {
-        RuleFor(x => x.Name)
-            .NotEmpty()
-            .WithMessage("Favor name is required.")
-            .MaximumLength(150)
-            .WithMessage("Favor name must not exceed 150 characters.");
+        RuleFor(x => x.Id).NotEmpty();
 
-        RuleFor(x => x.Price)
-            .GreaterThan(0)
-            .WithMessage("Price must be greater than 0.");
+        this.ApplyFavorRules();
     }
 }

@@ -30,7 +30,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("favors/top")]
-    public async Task<ActionResult<FavorResponse>> GetTopFavors([FromQuery] DateRangeRequest request, [FromQuery] int limit = 10)
+    public async Task<ActionResult<FavorReportResponse>> GetTopFavors([FromQuery] DateRangeRequest request, [FromQuery] int limit = 10)
     {
         await ValidatorUtils.Validate(_dateRangeValidator, request);
 

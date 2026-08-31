@@ -1,13 +1,11 @@
 using Hall_rent.Dto;
-using Hall_rent.Request;
 using Hall_rent.Response;
 
-namespace Hall_rent.Service;
+namespace Hall_rent.Service.Interface;
 
 public interface IFavorService
 {
     public Task<List<FavorResponse>> GetFavors();
-    public Task<FavorCreateResponse> AddFavor(FavorCreateRequest request);
+    public Task<FavorCreateResponse> AddFavor(FavorCreateDto request);
     public Task UpdateFavor(UpdateFavorDto request);
-    public Task DeleteFavor(Guid id);
 }

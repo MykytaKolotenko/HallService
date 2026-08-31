@@ -10,47 +10,16 @@ using Xunit;
 
 namespace Hall_rent.Tests.Infrastructure;
 
-public sealed class HallUnitOfWorkTests
+public class TransactionRunnerTests
 {
-    private static (SqliteConnection Connection, AppDbContext Context) CreateSqliteContext()
-    {
-        var connection = new SqliteConnection("Data Source=:memory:");
-        connection.Open();
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(connection)
-            .Options;
-        var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
-        return (connection, context);
-    }
-
-    private static HallUnitOfWork CreateUow(AppDbContext context)
+    private static TransactionRunner CreateUow(AppDbContext context)
     {
         var dispatcher = new ExceptionDispatcher([
             new SerializationConflictResolver(),
             new AppExceptionResolver(),
             new FallbackExceptionResolver()
         ]);
-        return new HallUnitOfWork(
-            context,
-            dispatcher);
-    }
-
-    [Fact]
-    public async Task SaveChangesAsync_ShouldPersistChanges()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
-        await using var db = new AppDbContext(options);
-        await db.Database.EnsureCreatedAsync();
-        var uow = CreateUow(db);
-        var hall = new HallEntity { Id = Guid.NewGuid(), Name = "Hall", Persons = 20, Price = 100m };
-        db.Halls.Add(hall);
-
-        await uow.SaveChangesAsync();
-
-        (await db.Halls.CountAsync()).Should().Be(1);
+        return new TransactionRunner(context);
     }
 
     [Fact]
@@ -71,8 +40,7 @@ public sealed class HallUnitOfWorkTests
                 db.Halls.Add(hall);
                 await db.SaveChangesAsync();
                 return hall.Id;
-            },
-            "CreateHall");
+            });
 
         result.Should().Be(hall.Id);
         await using var verification = new AppDbContext(options);
@@ -100,8 +68,7 @@ public sealed class HallUnitOfWorkTests
 
         var act = () => uow.RunInTransactionAsync(
             IsolationLevel.Serializable,
-            Operation,
-            "CreateHall");
+            Operation);
 
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
         await using var verification = new AppDbContext(options);
