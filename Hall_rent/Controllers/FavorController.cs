@@ -30,18 +30,18 @@ public class FavorController : ControllerBase
     [HttpGet(Name = "GetFavors")]
     public async Task<ActionResult<List<FavorResponse>>> GetFavors()
     {
-        List<FavorResponse> favors = await _favorService.GetFavors();
+        var favors = await _favorService.GetFavors();
 
         return Ok(favors);
     }
 
     [HttpPost(Name = "CreateFavor")]
-    public async Task<ActionResult<Guid>> CreateFavors([FromBody] FavorCreateRequest request)
+    public async Task<ActionResult<FavorCreateResponse>> CreateFavors([FromBody] FavorCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        Guid id = await _favorService.AddFavor(request);
+        var response = await _favorService.AddFavor(request);
 
-        return CreatedAtAction(nameof(CreateFavors), new { id }, id);
+        return CreatedAtAction(nameof(CreateFavors), response);
     }
 
     [HttpPatch("{id}", Name = "UpdateFavor")]

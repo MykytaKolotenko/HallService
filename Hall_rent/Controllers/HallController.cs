@@ -37,10 +37,10 @@ public class HallController : ControllerBase
     }
 
     [HttpPost(Name = "AddHall")]
-    public async Task<ActionResult<Guid>> CreateHall([FromBody] HallCreateRequest request)
+    public async Task<ActionResult<HallCreateResponse>> CreateHall([FromBody] HallCreateRequest request)
     {
         await ValidatorUtils.Validate(_createValidator, request);
-        var id = await _hallService.AddHall(new HallCreateDto
+        var response = await _hallService.AddHall(new HallCreateDto
             {
                 Name = request.Name,
                 Price = request.Price,
@@ -49,14 +49,14 @@ public class HallController : ControllerBase
             }
         );
 
-        return Ok(new { id });
+        return Ok(response);
     }
 
     [HttpPatch("{id}", Name = "UpdateHall")]
-    public async Task<ActionResult<Guid>> PatchHall(Guid id, [FromBody] HallUpdateRequest request)
+    public async Task<ActionResult<UpdateHallResponse>> PatchHall(Guid id, [FromBody] HallUpdateRequest request)
     {
         await ValidatorUtils.Validate(_updateValidator, request);
-        await _hallService.UpdateHall(new UpdateHallDto
+        var response = await _hallService.UpdateHall(new UpdateHallDto
             {
                 Id = id,
                 Price = request.Price,
@@ -65,7 +65,7 @@ public class HallController : ControllerBase
             }
         );
 
-        return Ok();
+        return Ok(response);
     }
 
     [HttpDelete("{id}", Name = "DeleteHall")]
@@ -95,7 +95,7 @@ public class HallController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<List<Guid>>> SearchHalls([FromBody] HallSearchRequest request)
+    public async Task<ActionResult<HallSearchResponse>> SearchHalls([FromBody] HallSearchRequest request)
     {
         await ValidatorUtils.Validate(_searchValidator, request);
 

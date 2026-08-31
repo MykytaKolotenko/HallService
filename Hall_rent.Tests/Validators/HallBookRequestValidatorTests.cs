@@ -1,5 +1,4 @@
 using FluentAssertions;
-using FluentValidation.Results;
 using FluentValidation.TestHelper;
 using Hall_rent.Request;
 using Hall_rent.Validation;
@@ -9,7 +8,7 @@ namespace Hall_rent.Tests.Validators;
 
 public sealed class HallBookRequestValidatorTests
 {
-    private readonly HallBookRequestValidator _validator = new HallBookRequestValidator();
+    private readonly HallBookRequestValidator _validator = new HallBookRequestValidator(new FixedClock(DateTime.UtcNow));
 
     private static HallBookRequest Valid()
     {
@@ -31,7 +30,7 @@ public sealed class HallBookRequestValidatorTests
     [Fact]
     public void ShouldRejectStartAtInThePast()
     {
-        HallBookRequest request = Valid();
+        var request = Valid();
         request.StartAt = DateTime.UtcNow.AddMinutes(-1);
 
         _validator.TestValidate(request)
@@ -42,7 +41,7 @@ public sealed class HallBookRequestValidatorTests
     [Fact]
     public void ShouldRejectEndAtBeforeStartAt()
     {
-        HallBookRequest request = Valid();
+        var request = Valid();
         request.EndAt = request.StartAt.AddMinutes(-1);
 
         _validator.TestValidate(request)
@@ -53,7 +52,7 @@ public sealed class HallBookRequestValidatorTests
     [Fact]
     public void ShouldRejectZeroPersons()
     {
-        HallBookRequest request = Valid();
+        var request = Valid();
         request.Persons = 0;
 
         _validator.TestValidate(request)
@@ -63,7 +62,7 @@ public sealed class HallBookRequestValidatorTests
     [Fact]
     public void ShouldRejectEmptyFavorId()
     {
-        HallBookRequest request = Valid();
+        var request = Valid();
         request.Favors = [Guid.Empty];
 
         _validator.Validate(request).IsValid.Should().BeFalse();
@@ -78,10 +77,10 @@ public sealed class HallBookRequestValidatorTests
     [Fact]
     public void ShouldNotThrow_WhenFavorsAreNull()
     {
-        HallBookRequest request = Valid();
+        var request = Valid();
         request.Favors = null!;
 
-        ValidationResult result = _validator.Validate(request);
+        var result = _validator.Validate(request);
 
         result.IsValid.Should().BeTrue();
     }

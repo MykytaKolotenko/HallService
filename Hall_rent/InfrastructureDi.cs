@@ -5,6 +5,7 @@ using Hall_rent.Helpers;
 using Hall_rent.Repository;
 using Hall_rent.Repository.Interfaces;
 using Hall_rent.Service;
+using Hall_rent.Service.Interface;
 using Hall_rent.Validation;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,7 @@ public static class InfrastructureDi
         services.AddValidatorsFromAssemblyContaining<HallUpdateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallBookRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<HallSearchRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<DateRangeRequestValidator>();
     }
 
     private static void AddRepository(this IServiceCollection services)
@@ -43,6 +45,7 @@ public static class InfrastructureDi
         services.AddScoped<IHallRepository, HallRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IFavorRepository, FavorRepository>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 
         services.AddScoped<IFavorResolver, FavorResolver>();
     }
@@ -52,6 +55,7 @@ public static class InfrastructureDi
         services.AddScoped<IHallService, HallService>();
         services.AddScoped<IFavorService, FavorService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IClock, SystemClock>();
     }
 
