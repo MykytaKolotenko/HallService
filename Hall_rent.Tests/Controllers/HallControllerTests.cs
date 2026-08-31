@@ -14,22 +14,25 @@ namespace Hall_rent.Tests.Controllers;
 
 public sealed class HallControllerTests
 {
-    private readonly Mock<IBookingService> _bookingService = new();
-    private readonly Mock<IHallService> _hallService = new();
+    private readonly Mock<IBookingService> _bookingService = new Mock<IBookingService>();
+    private readonly Mock<IHallService> _hallService = new Mock<IHallService>();
 
-    private HallController Sut() => new(
-        _hallService.Object,
-        _bookingService.Object,
-        new HallCreateRequestValidator(),
-        new HallSearchRequestValidator(new FixedClock(DateTime.UtcNow)),
-        new HallUpdateRequestValidator(),
-        new HallBookRequestValidator());
+    private HallController Sut()
+    {
+        return new HallController(
+            _hallService.Object,
+            _bookingService.Object,
+            new HallCreateRequestValidator(),
+            new HallSearchRequestValidator(new FixedClock(DateTime.UtcNow)),
+            new HallUpdateRequestValidator(),
+            new HallBookRequestValidator(new FixedClock(DateTime.UtcNow)));
+    }
 
     [Fact]
     public async Task CreateHall_ShouldCallServiceAndReturnOk()
     {
         var id = Guid.NewGuid();
-        _hallService.Setup(x => x.AddHall(It.IsAny<HallCreateDto>())).ReturnsAsync(id);
+        _hallService.Setup(x => x.AddHall(It.IsAny<HallCreateDto>())).ReturnsAsync(new HallCreateResponse(id));
         var request = new HallCreateRequest { Name = "Hall", Persons = 20, Price = 100m, Favors = [] };
 
         var result = await Sut().CreateHall(request);
@@ -140,7 +143,7 @@ public sealed class HallControllerTests
             Persons = 10
         };
         var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        _hallService.Setup(x => x.FindAvailableHallIdsAsync(It.IsAny<HallSearchDto>())).ReturnsAsync(ids);
+        _hallService.Setup(x => x.FindAvailableHallIdsAsync(It.IsAny<HallSearchDto>())).ReturnsAsync(new HallSearchResponse(ids));
 
         var result = await Sut().SearchHalls(request);
 

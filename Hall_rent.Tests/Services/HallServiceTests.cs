@@ -203,7 +203,7 @@ public sealed class HallServiceTests
 
         var result = await Sut().FindAvailableHallIdsAsync(request);
 
-        result.Should().Equal(first, second);
+        result.Halls.Should().Equal(first, second);
     }
 
     [Fact]

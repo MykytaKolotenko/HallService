@@ -1,14 +1,15 @@
 using FluentValidation;
+using Hall_rent.Helpers;
 using Hall_rent.Request;
 
 namespace Hall_rent.Validation;
 
 public class HallBookRequestValidator : AbstractValidator<HallBookRequest>
 {
-    public HallBookRequestValidator()
+    public HallBookRequestValidator(IClock clock)
     {
         RuleFor(x => x.StartAt)
-            .GreaterThan(DateTime.UtcNow)
+            .GreaterThan(clock.UtcNow)
             .WithMessage("StartAt must be in the future.");
 
         RuleFor(x => x.EndAt)

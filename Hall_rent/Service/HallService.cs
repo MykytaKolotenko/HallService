@@ -3,6 +3,7 @@ using Hall_rent.Entity;
 using Hall_rent.Exceptions;
 using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
+using Hall_rent.Response;
 
 namespace Hall_rent.Service;
 
@@ -22,7 +23,7 @@ public class HallService : IHallService
         _favorResolver = favorResolver;
     }
 
-    public async Task<Guid> AddHall(HallCreateDto hall)
+    public async Task<HallCreateResponse> AddHall(HallCreateDto hall)
     {
         var favors = await _favorResolver.ResolveOrThrowAsync(hall.Favors);
 
@@ -45,10 +46,10 @@ public class HallService : IHallService
             throw new HallNameAlreadyExistsException(hallEntity.Name, ex);
         }
 
-        return hallEntity.Id;
+        return new HallCreateResponse(hallEntity.Id);
     }
 
-    public async Task UpdateHall(UpdateHallDto request)
+    public async Task<UpdateHallResponse> UpdateHall(UpdateHallDto request)
     {
         var hall = await GetHall(request.Id);
         var favors = await _favorResolver.ResolveOrThrowAsync(request.Favors);
@@ -63,6 +64,8 @@ public class HallService : IHallService
         }
 
         await _hallUnitOfWork.SaveChangesAsync();
+
+        return new UpdateHallResponse(hall.Id);
     }
 
     public async Task DeleteHall(Guid id)
@@ -72,7 +75,7 @@ public class HallService : IHallService
         await _hallUnitOfWork.SaveChangesAsync();
     }
 
-    public async Task<List<Guid>> FindAvailableHallIdsAsync(HallSearchDto request)
+    public async Task<HallSearchResponse> FindAvailableHallIdsAsync(HallSearchDto request)
     {
         var halls = await _hallRepository.FindAvailableHallsAsync(request.StartAt, request.EndAt, request.Persons);
 
@@ -80,7 +83,7 @@ public class HallService : IHallService
             throw new NotFoundException(
                 $"No halls available for {request.Persons} persons from {request.StartAt:yyyy-MM-dd HH:mm} to {request.EndAt:yyyy-MM-dd HH:mm}.");
 
-        return halls.Select(h => h.Id).ToList();
+        return new HallSearchResponse(halls.Select(h => h.Id).ToList());
     }
 
     private async Task<HallEntity> GetHall(Guid hallId)

@@ -26,7 +26,7 @@ public class FavorService : IFavorService
         return FavorMapper.ToResponse(favors);
     }
 
-    public async Task<Guid> AddFavor(FavorCreateRequest request)
+    public async Task<FavorCreateResponse> AddFavor(FavorCreateRequest request)
     {
         var favor = new FavorEntity
         {
@@ -37,7 +37,7 @@ public class FavorService : IFavorService
         await _favorRepository.AddAsync(favor);
         await _hallUnitOfWork.SaveChangesAsync();
 
-        return favor.Id;
+        return new FavorCreateResponse(favor.Id);
     }
 
     public async Task UpdateFavor(UpdateFavorDto request)
