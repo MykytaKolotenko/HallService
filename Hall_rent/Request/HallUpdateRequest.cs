@@ -5,6 +5,6 @@ public record HallUpdateRequest
     public decimal Price { get; init; }
     public int Persons { get; init; }
 
-    public string Name { get; init; }
+    public string Name { get; init; } = string.Empty;
     public List<Guid>? Favors { get; init; }
 }

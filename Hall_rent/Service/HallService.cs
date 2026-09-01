@@ -30,15 +30,7 @@ public class HallService : IHallService
         var hallEntity = HallMapper.CreateDtoToEntity(hall, favors);
 
         await _hallRepository.AddAsync(hallEntity);
-
-        try
-        {
-            await _unitOfWork.SaveChangesAsync();
-        }
-        catch (UniqueConstraintException ex)
-        {
-            throw new HallNameAlreadyExistsException(hallEntity.Name, ex);
-        }
+        await _unitOfWork.SaveChangesAsync();
 
         return new HallCreateResponse(hallEntity.Id);
     }
@@ -53,6 +45,7 @@ public class HallService : IHallService
         hall.Name = request.Name;
 
         hall.Favors.Clear();
+
         foreach (var favor in favors)
         {
             hall.Favors.Add(new HallFavorEntity { HallId = hall.Id, FavorId = favor.Id });

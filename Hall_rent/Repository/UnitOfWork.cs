@@ -1,5 +1,8 @@
 using Hall_rent.Context;
+using Hall_rent.Exceptions;
+using Hall_rent.Exceptions.Handling;
 using Hall_rent.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hall_rent.Repository;
 
@@ -14,6 +17,13 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken))
     {
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (SqlErrorClassifier.IsUniqueViolation(ex))
+        {
+            throw UniqueConstraintExceptionFactory.Create(ex);
+        }
     }
 }

@@ -7,5 +7,5 @@ public record UpdateHallDto
     public int Persons { get; init; }
     public List<Guid> Favors { get; init; } = [];
 
-    public string Name { get; init; }
+    public string Name { get; init; } = string.Empty;
 }

@@ -16,37 +16,62 @@ public class AnalyticsRepository : IAnalyticsRepository
 
     public async Task<List<HallRevenueRow>> GetByPeriodAsync(DateTime from, DateTime to)
     {
-        return await _context.Bookings
+        var bookings = await _context.Bookings
             .AsNoTracking()
             .Where(b => b.From >= from && b.From < to)
-            .GroupBy(b => b.From.Date)
-            .Select(g => new HallRevenueRow(g.Key, g.Sum(b => b.Price), g.Count()))
-            .OrderBy(r => r.Day)
+            .Select(b => new
+            {
+                b.From,
+                b.Price
+            })
             .ToListAsync();
+
+        return bookings
+            .GroupBy(b => b.From.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new HallRevenueRow(
+                g.Key,
+                g.Sum(b => b.Price),
+                g.Count()
+            ))
+            .ToList();
     }
 
-    public async Task<List<FavorRevenueRow>> GetTopFavorsAsync(DateTime from, DateTime to, int limit)
+    public async Task<List<FavorRevenueRow>> GetTopFavorsAsync(
+        DateTime from,
+        DateTime to,
+        int limit)
     {
-        var favorCounts = _context.Bookings
-            .AsNoTracking()
+        var result = await _context.Bookings
             .Where(b => b.From >= from && b.From < to)
-            .SelectMany(b => b.Favors, (booking, favorId) => favorId)
-            .GroupBy(favorId => favorId)
-            .Select(g => new FavorCount(g.Key.FavorId, g.Count()));
-
-        return await JoinWithFavorDetails(favorCounts)
-            .OrderByDescending(r => r.BookingsCount)
+            .SelectMany(b => b.Favors)
+            .Join(
+                _context.Favors,
+                bf => bf.FavorId,
+                f => f.Id,
+                (bf, f) => new
+                {
+                    bf.FavorId,
+                    f.Name,
+                    bf.PriceAtBooking
+                })
+            .GroupBy(x => new
+            {
+                x.FavorId,
+                x.Name
+            })
+            .Select(g => new FavorRevenueRow
+            {
+                Id = g.Key.FavorId,
+                Name = g.Key.Name,
+                BookingsCount = g.Count(),
+                Revenue = g.Sum(x => x.PriceAtBooking)
+            })
+            .OrderByDescending(x => x.Revenue)
             .Take(limit)
             .ToListAsync();
-    }
 
-    private IQueryable<FavorRevenueRow> JoinWithFavorDetails(IQueryable<FavorCount> favorCounts)
-    {
-        return favorCounts.Join(
-            _context.Favors,
-            fc => fc.FavorId,
-            favor => favor.Id,
-            (fc, favor) => new FavorRevenueRow(favor.Id, fc.TimesBooked, favor.Name, fc.TimesBooked * favor.Price));
+        return result;
     }
 
     private record FavorCount(Guid FavorId, int TimesBooked);

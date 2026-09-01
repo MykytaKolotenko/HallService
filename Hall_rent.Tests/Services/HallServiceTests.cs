@@ -94,32 +94,6 @@ public sealed class HallServiceTests
     }
 
     [Fact]
-    public async Task AddHall_ShouldTranslateUniqueConstraintException()
-    {
-        var dto = new HallCreateDto
-        {
-            Name = "Duplicate",
-            Price = 100m,
-            Persons = 20,
-            Favors = []
-        };
-        var dbException = new Exception("duplicate");
-
-        _favorResolver
-            .Setup(x => x.ResolveOrThrowAsync(It.IsAny<IEnumerable<Guid>>()))
-            .ReturnsAsync([]);
-
-        _unitOfWork.Setup(x => x.SaveChangesAsync(default(CancellationToken)))
-            .ThrowsAsync(new UniqueConstraintException("Halls.Name", dbException));
-
-        var act = () => Sut().CreateHall(dto);
-
-        var ex = await act.Should().ThrowAsync<HallNameAlreadyExistsException>();
-        ex.Which.Name.Should().Be(dto.Name);
-        ex.Which.InnerException.Should().BeOfType<UniqueConstraintException>();
-    }
-
-    [Fact]
     public async Task UpdateHall_ShouldUpdateAndSave()
     {
         var id = Guid.NewGuid();

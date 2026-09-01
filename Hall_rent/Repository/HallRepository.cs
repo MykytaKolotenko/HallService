@@ -1,6 +1,5 @@
 using Hall_rent.Context;
 using Hall_rent.Entity;
-using Hall_rent.Helpers;
 using Hall_rent.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,11 +33,18 @@ public class HallRepository : IHallRepository
         _dbSet.Remove(hall);
     }
 
-    public async Task<List<HallEntity>> FindAvailableHallsAsync(DateTime from, DateTime to, int persons)
+    public async Task<List<HallEntity>> FindAvailableHallsAsync(
+        DateTime from,
+        DateTime to,
+        int persons)
     {
         return await _dbSet
             .Where(h => h.Persons >= persons)
-            .Where(h => !_context.Set<HallBookingEntity>().Any(Specification.OverlapsBooking(h.Id, from, to)))
+            .Where(h => !_context.Set<HallBookingEntity>()
+                .Any(b =>
+                    b.HallId == h.Id &&
+                    b.From < to &&
+                    b.To > from))
             .ToListAsync();
     }
 }
