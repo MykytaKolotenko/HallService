@@ -3,8 +3,8 @@ using FluentValidation;
 
 namespace Hall_rent.Exceptions.Handling;
 
-// Ловит FluentValidation.ValidationException независимо от того, где он выброшен:
-// ValidatorUtils.Validate в контроллере, ручная валидация внутри сервиса и т.д.
+// Catches FluentValidation.ValidationException no matter where it is thrown:
+// ValidatorUtils.Validate in the controller, manual validation inside a service, etc.
 public class ValidationExceptionResolver : IExceptionResolver
 {
     public bool CanHandle(Exception ex)

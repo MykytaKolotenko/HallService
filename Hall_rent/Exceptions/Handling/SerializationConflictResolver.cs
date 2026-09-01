@@ -1,6 +1,6 @@
 namespace Hall_rent.Exceptions.Handling;
 
-// Ловит "сырую" SqlException/DbUpdateException с кодом serialization failure (1205/3960),
+// Catches the raw SqlException/DbUpdateException with serialization failure code,
 public class SerializationConflictResolver : IExceptionResolver
 {
     public bool CanHandle(Exception ex)
