@@ -56,7 +56,7 @@ public sealed class HallControllerTests
     public async Task PatchHall_ShouldPassRouteIdToService()
     {
         var id = Guid.NewGuid();
-        var request = new HallUpdateRequest { Persons = 10, Price = 200m, Favors = [] };
+        var request = new HallUpdateRequest { Name = "Hall", Persons = 10, Price = 200m, Favors = [] };
 
         var result = await Sut().PatchHall(id, request);
 

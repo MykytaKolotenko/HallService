@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hall_rent.Request;
+using Hall_rent.Validation.Rules;
 
 namespace Hall_rent.Validation;
 
@@ -9,8 +10,6 @@ public class AnalyticsTopFavorValidator : AbstractValidator<AnalyticsTopFavorReq
     {
         this.ApplyRangeRules();
 
-        RuleFor(x => x.Limit)
-            .GreaterThan(0)
-            .LessThanOrEqualTo(100);
+        this.LimitValidator(x => x.Limit);
     }
 }

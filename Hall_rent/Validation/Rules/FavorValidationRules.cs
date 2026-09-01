@@ -1,7 +1,7 @@
 using FluentValidation;
 using Hall_rent.Request.Interface;
 
-namespace Hall_rent.Validation;
+namespace Hall_rent.Validation.Rules;
 
 public static class FavorValidationRules
 {

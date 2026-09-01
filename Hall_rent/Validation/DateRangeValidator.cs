@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hall_rent.Request;
+using Hall_rent.Validation.Rules;
 
 namespace Hall_rent.Validation;
 

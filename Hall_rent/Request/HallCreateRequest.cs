@@ -1,6 +1,8 @@
+using Hall_rent.Request.Interface;
+
 namespace Hall_rent.Request;
 
-public record HallCreateRequest
+public record HallCreateRequest : IHallRequest
 {
     public List<Guid>? Favors { get; init; }
 

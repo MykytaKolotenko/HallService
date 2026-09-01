@@ -15,10 +15,26 @@ public sealed class HallUpdateRequestValidatorTests
     {
         _validator.Validate(new HallUpdateRequest
         {
+            Name = "Main Hall",
             Persons = 20,
             Price = 100m,
             Favors = [Guid.NewGuid()]
         }).IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ShouldRejectEmptyName()
+    {
+        _validator.TestValidate(new HallUpdateRequest { Name = "", Persons = 20, Price = 100m, Favors = [] })
+            .ShouldHaveValidationErrorFor(x => x.Name)
+            .WithErrorMessage("Hall name is required.");
+    }
+
+    [Fact]
+    public void ShouldRejectNameLongerThan200Characters()
+    {
+        _validator.TestValidate(new HallUpdateRequest { Name = new string('x', 201), Persons = 20, Price = 100m, Favors = [] })
+            .ShouldHaveValidationErrorFor(x => x.Name);
     }
 
     [Fact]

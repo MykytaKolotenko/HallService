@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hall_rent.Request;
+using Hall_rent.Validation.Rules;
 
 namespace Hall_rent.Validation;
 
@@ -7,13 +8,7 @@ public class HallUpdateRequestValidator : AbstractValidator<HallUpdateRequest>
 {
     public HallUpdateRequestValidator()
     {
-        RuleFor(x => x.Price)
-            .GreaterThan(0)
-            .WithMessage("Price must be greater than 0.");
-
-        RuleFor(x => x.Persons)
-            .GreaterThan(0)
-            .WithMessage("Persons must be greater than 0.");
+        this.ApplyHallRules();
 
         RuleFor(x => x.Favors)
             .NotNull()
