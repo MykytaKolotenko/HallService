@@ -14,6 +14,11 @@ public class FavorResolver : IFavorResolver
         _favorRepository = favorRepository;
     }
 
+    // Resolves the list of service IDs in the entity and guarantees that ALL provided IDs exist.
+    // It is enough to compare the number of found rows with the number of requested unique IDs;
+    // the missing ID(s) are determined with Except only in the exception branch, which is rarely executed.
+    // Used both when creating/updating a hall (which services it offers) and when booking
+    // (which services the client selected).
     public async Task<List<FavorEntity>> ResolveOrThrowAsync(IEnumerable<Guid>? ids)
     {
         var distinctIds = (ids ?? []).Distinct().ToList();

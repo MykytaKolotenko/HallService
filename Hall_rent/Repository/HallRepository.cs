@@ -33,6 +33,10 @@ public class HallRepository : IHallRepository
         _dbSet.Remove(hall);
     }
 
+    // The same interval overlap principle as in Specification.OverlapsBooking (b.From < to && b.To > from),
+// but written manually as a correlated subquery (h => !Any(...)) rather than through the Specification itself,
+// because here the filter is applied to each hall h in a set of halls, not to a single booking.
+// A hall is considered available if there are NO bookings for it that overlap the requested [from, to) interval.
     public async Task<List<HallEntity>> FindAvailableHallsAsync(
         DateTime from,
         DateTime to,

@@ -26,23 +26,31 @@ public class AppDbContext : DbContext
             builder.Property(x => x.Price).HasPrecision(18, 2);
         });
 
+        // HallBookingFavorEntity is a many-to-many relationship between a booking and a service,
+// with an additional PriceAtBooking field (a snapshot of the service price at the time of booking;
+// see FavorMapper.ToEntity).
         modelBuilder.Entity<HallBookingFavorEntity>(builder =>
         {
             builder.HasKey(x => x.Id);
             builder.Property(x => x.PriceAtBooking).HasPrecision(18, 2);
-
+// Cascade: if a booking is deleted, its service rows (with the price snapshot) are no longer needed
+// and are deleted together with it.
             builder
                 .HasOne(x => x.Booking)
                 .WithMany(x => x.Favors)
                 .HasForeignKey(x => x.HallBookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Restrict (not Cascade!): a service from the Favor catalog cannot be deleted if at least one
+// historical booking references it — otherwise deleting FavorEntity would silently erase part of
+// the booking history and corrupt analytics (see AnalyticsRepository.GetTopFavorsAsync)..
             builder
                 .HasOne(x => x.Favor)
                 .WithMany()
                 .HasForeignKey(x => x.FavorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // The same favor cannot be added to the same booking twice.
             builder
                 .HasIndex(x => new { x.HallBookingId, x.FavorId })
                 .IsUnique();

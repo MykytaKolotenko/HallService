@@ -3,6 +3,13 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- Требуется, чтобы Swagger мог подхватывать XML-комментарии (///-summary) с контроллеров/DTO
+             и показывать их в качестве описаний эндпоинтов и моделей в Swagger UI. -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- CS1591: "отсутствует XML-комментарий для публичного члена". Комментируем не всё подряд (только
+             неочевидные места), поэтому предупреждение просто засоряло бы вывод сборки — глушим его. -->
+        <NoWarn>$(NoWarn);1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

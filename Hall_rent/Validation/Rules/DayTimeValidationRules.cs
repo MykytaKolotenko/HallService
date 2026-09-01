@@ -4,6 +4,9 @@ using Hall_rent.Request.Interface;
 
 namespace Hall_rent.Validation.Rules;
 
+// Common rules for any DTO/Request implementing IDateRange (From/To) — reused
+// in HallSearchRequestValidator, HallBookRequestValidator, DateRangeValidator, AnalyticsTopFavorValidator
+// via this.ApplyRangeRules() / this.ApplyDateRules(clock) (extension methods on AbstractValidator<T>).
 public static class DayTimeValidationRules
 {
     public static void ApplyRangeRules<T>(this AbstractValidator<T> validator)

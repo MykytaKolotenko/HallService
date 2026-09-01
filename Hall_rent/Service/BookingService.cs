@@ -32,6 +32,12 @@ public sealed class BookingService : IBookingService
         _transactionRunner = transactionRunner;
     }
 
+// Serializable is the strictest isolation level: it is needed so that two parallel requests
+// trying to book the same hall for overlapping time ranges cannot both pass the
+// IsHallAvailableAsync check (which is just a regular SELECT, not a lock) and then both insert
+// a booking. One of the competing requests will get a serialization failure from SQL Server
+// on commit, which SerializationConflictResolver turns into 409 ConcurrencyConflict — the client
+// must be prepared to retry the request.
     public Task<HallBookResponse> BookAsync(BookHallDto request)
     {
         return _transactionRunner.RunInTransactionAsync(
@@ -46,6 +52,8 @@ public sealed class BookingService : IBookingService
         if (request.Persons > hall.Persons)
             throw new HallCapacityExceededException(hall.Id, hall.Persons, request.Persons);
 
+        // Hall occupancy check for the [StartAt, EndAt) interval — see Specification.OverlapsBooking
+        // for the interval overlap formula..
         var available = await _bookingRepository.IsHallAvailableAsync(hall.Id, request.StartAt, request.EndAt);
 
         if (!available) throw new HallNotAvailableException(hall.Id, request.StartAt, request.EndAt);
@@ -67,6 +75,9 @@ public sealed class BookingService : IBookingService
             Price = FavorCalculator.Calculate(hall.Price, favors.Select(FavorMapper.ToDto).ToList())
         };
 
+        // Each service price is "frozen" in HallBookingFavorEntity.PriceAtBooking at booking time
+        // (see FavorMapper.ToEntity) — any later price changes in the service catalog must not retroactively
+        // change the cost of already created bookings.
         booking.Favors = favors.Select(f => FavorMapper.ToEntity(f, booking)).ToList();
 
         await _bookingRepository.AddAsync(booking);

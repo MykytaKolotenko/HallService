@@ -15,6 +15,11 @@ public class UnitOfWork : IUnitOfWork
         _dbContext = dbContext;
     }
 
+    // We only handle unique constraint violations here (not, for example, serialization failures —
+    // those are handled at a higher level in ExceptionDispatcher via SerializationConflictResolver),
+    // because only for unique violations do we have access to EntityEntry (ex.Entries) and can build
+    // a clear domain exception such as HallNameAlreadyExistsException with the name of the conflicting
+    // entity — see UniqueConstraintExceptionFactory.Create.
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken))
     {
         try

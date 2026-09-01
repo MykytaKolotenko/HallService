@@ -44,6 +44,11 @@ public class HallService : IHallService
         hall.Price = request.Price;
         hall.Name = request.Name;
 
+        // Full replacement of the service set: Clear() removes all current HallFavorEntity relationships
+        // (EF will mark them for deletion thanks to the configured navigation collection), then we add
+        // everything again from the current request.Favors list. This is simpler than an incremental diff
+        // (adding only new items and removing only missing ones), but it means the PATCH request must
+        // always send the FULL list of hall services, not just the changes (see also HallController.PatchHall).
         hall.Favors.Clear();
 
         foreach (var favor in favors)
@@ -56,7 +61,13 @@ public class HallService : IHallService
         return new UpdateHallResponse(hall.Id);
     }
 
-    //There will be bug with deleting hall in analytics
+    // There will be a bug when deleting a hall in analytics:
+    // the FK on HallEntity in AppDbContext is not configured with ON DELETE CASCADE for HallBookingEntity,
+    // but historical Bookings/HallBookingFavorEntity still reference the deleted hall's HallId —
+    // either the delete will fail with an FK constraint violation (if the hall has bookings),
+    // or (if the constraint allows it) AnalyticsRepository reports will be left with an "orphaned" HallId.
+    // Before allowing deletion of halls with bookings, you should decide explicitly:
+    // either soft-delete the hall or forbid deletion when bookings exist.
     public async Task DeleteHall(Guid id)
     {
         var hall = await GetHall(id);

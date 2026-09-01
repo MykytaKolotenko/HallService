@@ -53,6 +53,15 @@ public static class InfrastructureDi
         services.AddScoped<IClock, SystemClock>();
     }
 
+    // IMPORTANT: the order of elements in the array passed to ExceptionDispatcher is the resolvers'
+// priority (see the comment in ExceptionDispatcher.Resolve: the first resolver with CanHandle == true
+// is used). The order here is:
+//   1. ValidationExceptionResolver      — FluentValidation errors -> 400
+//   2. SerializationConflictResolver    — races in Serializable transactions -> 409
+//   3. UniqueViolationResolver          — unique index violation in the database -> 409
+//   4. AppExceptionResolver             — all other domain AppException types -> their StatusCode
+//   5. FallbackExceptionResolver        — catches everything (CanHandle is always true) -> 500,
+//                                          and must be the last one in the list.
     private static void AddExceptions(this IServiceCollection services)
     {
         services.AddProblemDetails();
