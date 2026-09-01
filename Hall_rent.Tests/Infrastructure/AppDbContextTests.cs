@@ -16,7 +16,25 @@ public sealed class AppDbContextTests
         entityTypes.Should().Contain(typeof(HallEntity));
         entityTypes.Should().Contain(typeof(FavorEntity));
         entityTypes.Should().Contain(typeof(HallBookingEntity));
+        entityTypes.Should().Contain(typeof(HallBookingFavorEntity));
         entityTypes.Should().Contain(typeof(HallFavorEntity));
+
+        var bookingFavor = db.Model.FindEntityType(typeof(HallBookingFavorEntity));
+        bookingFavor.Should().NotBeNull();
+        bookingFavor!.FindProperty(nameof(HallBookingFavorEntity.HallBookingId)).Should().NotBeNull();
+        bookingFavor.FindProperty(nameof(HallBookingFavorEntity.FavorId)).Should().NotBeNull();
+
+        var uniqueIndexes = bookingFavor.GetIndexes()
+            .Where(i => i.IsUnique)
+            .ToList();
+
+        uniqueIndexes.Should().Contain(i =>
+            i.Properties.Count == 2 &&
+            i.Properties[0].Name == nameof(HallBookingFavorEntity.HallBookingId) &&
+            i.Properties[1].Name == nameof(HallBookingFavorEntity.FavorId));
+        bookingFavor.GetForeignKeys().Should().ContainSingle(fk =>
+            fk.Properties.Single().Name == nameof(HallBookingFavorEntity.HallBookingId) &&
+            fk.PrincipalEntityType.ClrType == typeof(HallBookingEntity));
 
         var hall = db.Model.FindEntityType(typeof(HallEntity));
         hall.Should().NotBeNull();

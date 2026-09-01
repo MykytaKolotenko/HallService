@@ -16,25 +16,16 @@ public class AnalyticsRepository : IAnalyticsRepository
 
     public async Task<List<HallRevenueRow>> GetByPeriodAsync(DateTime from, DateTime to)
     {
-        var bookings = await _context.Bookings
+        return await _context.Bookings
             .AsNoTracking()
             .Where(b => b.From >= from && b.From < to)
-            .Select(b => new
-            {
-                b.From,
-                b.Price
-            })
-            .ToListAsync();
-
-        return bookings
             .GroupBy(b => b.From.Date)
             .OrderBy(g => g.Key)
             .Select(g => new HallRevenueRow(
                 g.Key,
                 g.Sum(b => b.Price),
-                g.Count()
-            ))
-            .ToList();
+                g.Count()))
+            .ToListAsync();
     }
 
     public async Task<List<FavorRevenueRow>> GetTopFavorsAsync(
@@ -43,10 +34,11 @@ public class AnalyticsRepository : IAnalyticsRepository
         int limit)
     {
         var result = await _context.Bookings
+            .AsNoTracking()
             .Where(b => b.From >= from && b.From < to)
             .SelectMany(b => b.Favors)
             .Join(
-                _context.Favors,
+                _context.Favors.AsNoTracking(),
                 bf => bf.FavorId,
                 f => f.Id,
                 (bf, f) => new
@@ -73,6 +65,4 @@ public class AnalyticsRepository : IAnalyticsRepository
 
         return result;
     }
-
-    private record FavorCount(Guid FavorId, int TimesBooked);
 }

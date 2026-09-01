@@ -19,7 +19,7 @@ public sealed class AnalyticsControllerTests
 
     private AnalyticsController Sut()
     {
-        return new AnalyticsController(_analyticsService.Object, new DataRangeValidator(_clock));
+        return new AnalyticsController(_analyticsService.Object, new DateRangeValidator(), new AnalyticsTopFavorValidator());
     }
 
     [Fact]
@@ -58,27 +58,34 @@ public sealed class AnalyticsControllerTests
     }
 
     [Fact]
-    public async Task GetRevenue_ShouldRejectPastDateRange_DueToReusedBookingFutureDateRule()
+    public async Task GetRevenue_ShouldAllowHistoricalDateRange()
     {
         var request = new DateRangeRequest
         {
             From = _clock.UtcNow.AddDays(-30),
             To = _clock.UtcNow.AddDays(-1)
         };
+        var response = new RevenueReportResponse { TotalRevenue = 500m, TotalBookings = 3, RevenuePerDay = [] };
 
-        var act = () => Sut().GetRevenue(request);
+        _analyticsService
+            .Setup(x => x.GetRevenueReportAsync(It.IsAny<DateRangeDto>()))
+            .ReturnsAsync(response);
 
-        await act.Should().ThrowAsync<ValidationException>()
-            .Where(ex => ex.Errors.Any(e => e.ErrorMessage.Contains("must be in the future")));
+        var result = await Sut().GetRevenue(request);
+
+        result.Result.Should().BeOfType<OkObjectResult>();
+        _analyticsService.Verify(x => x.GetRevenueReportAsync(
+            It.Is<DateRangeDto>(d => d.From == request.From && d.To == request.To)), Times.Once);
     }
 
     [Fact]
     public async Task GetTopFavors_ShouldPassRangeAndLimitToService()
     {
-        var request = new DateRangeRequest
+        var request = new AnalyticsTopFavorRequest
         {
             From = _clock.UtcNow.AddDays(1),
-            To = _clock.UtcNow.AddDays(2)
+            To = _clock.UtcNow.AddDays(2),
+            Limit = 5
         };
         var response = new FavorReportResponse { Revenue = 100m, BookingsCount = 2, Favors = [] };
 
@@ -88,7 +95,7 @@ public sealed class AnalyticsControllerTests
                 5))
             .ReturnsAsync(response);
 
-        var result = await Sut().GetTopFavors(request, 5);
+        var result = await Sut().GetTopFavors(request);
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().Be(response);
@@ -98,10 +105,11 @@ public sealed class AnalyticsControllerTests
     [Fact]
     public async Task GetTopFavors_ShouldUseDefaultLimit_WhenNotProvided()
     {
-        var request = new DateRangeRequest
+        var request = new AnalyticsTopFavorRequest
         {
             From = _clock.UtcNow.AddDays(1),
-            To = _clock.UtcNow.AddDays(2)
+            To = _clock.UtcNow.AddDays(2),
+            Limit = 10
         };
 
         _analyticsService
@@ -116,11 +124,26 @@ public sealed class AnalyticsControllerTests
     [Fact]
     public async Task GetTopFavors_ShouldRejectMissingDates()
     {
-        var request = new DateRangeRequest();
+        var request = new AnalyticsTopFavorRequest();
 
         var act = () => Sut().GetTopFavors(request);
 
         await act.Should().ThrowAsync<ValidationException>();
         _analyticsService.Verify(x => x.GetTopFavorsAsync(It.IsAny<DateRangeDto>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public async Task LimitValidator_ShouldRejectNonPositiveLimit(int limit)
+    {
+        var validator = new LimitValidator();
+
+        var result = await validator.ValidateAsync(limit);
+
+        result.IsValid.Should().BeFalse();
+
+        result.Errors.Should().ContainSingle();
     }
 }

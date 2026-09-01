@@ -16,8 +16,10 @@ public static class FavorMapper
     {
         return new HallBookingFavorEntity
         {
-            Favor = favor,
+            HallBookingId = booking.Id,
             Booking = booking,
+            FavorId = favor.Id,
+            Favor = favor,
             PriceAtBooking = favor.Price
         };
     }

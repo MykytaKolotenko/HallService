@@ -1,6 +1,8 @@
 using FluentAssertions;
+using Hall_rent.Context;
 using Hall_rent.Entity;
 using Hall_rent.Repository;
+using Hall_rent.Row;
 using Hall_rent.Tests.Support;
 using Xunit;
 
@@ -9,58 +11,61 @@ namespace Hall_rent.Tests.Repositories;
 public sealed class AnalyticsRepositoryTests
 {
     [Fact]
-    public async Task GetByPeriodAsync_ShouldGroupRevenueByDay()
+    public async Task GetByPeriodAsync_ShouldGroupRevenueByBookingStartDay()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var day1 = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
-        var day2 = new DateTime(2030, 1, 2, 10, 0, 0, DateTimeKind.Utc);
+        var day1 = Utc(2030, 1, 1, 10);
+        var day2 = Utc(2030, 1, 2, 10);
 
         db.Bookings.AddRange(
-            new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = day1, To = day1.AddHours(2), Price = 100m },
-            new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = day1.AddHours(4), To = day1.AddHours(6), Price = 50m },
-            new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = day2, To = day2.AddHours(2), Price = 200m });
+            Booking(day1, 100m),
+            Booking(day1.AddHours(4), 50m),
+            Booking(day2, 200m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
-
-        var result = await repository.GetByPeriodAsync(day1.Date, day2.Date.AddDays(1));
+        var result = await Sut(db).GetByPeriodAsync(day1.Date, day2.Date.AddDays(1));
 
         result.Should().HaveCount(2);
-        result[0].Day.Should().Be(day1.Date);
-        result[0].Revenue.Should().Be(150m);
-        result[0].BookingsCount.Should().Be(2);
-        result[1].Day.Should().Be(day2.Date);
-        result[1].Revenue.Should().Be(200m);
-        result[1].BookingsCount.Should().Be(1);
+        result[0].Should().BeEquivalentTo(
+            new HallRevenueRow(
+                day1.Date,
+                150m,
+                2));
+
+        result[1].Should().BeEquivalentTo(
+            new HallRevenueRow(
+                day2.Date,
+                200m,
+                1));
     }
 
     [Fact]
-    public async Task GetByPeriodAsync_ShouldExcludeBookingsOutsideRange()
+    public async Task GetByPeriodAsync_ShouldUseHalfOpenRange()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var inRange = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
-        var outOfRange = new DateTime(2030, 2, 1, 10, 0, 0, DateTimeKind.Utc);
+        var from = Utc(2030, 1, 1, 10);
+        var to = from.AddDays(1);
 
         db.Bookings.AddRange(
-            new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = inRange, To = inRange.AddHours(2), Price = 100m },
-            new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = outOfRange, To = outOfRange.AddHours(2), Price = 999m });
+            Booking(from, 100m),
+            Booking(to, 999m),
+            Booking(from.AddDays(-1), 888m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
-
-        var result = await repository.GetByPeriodAsync(new DateTime(2030, 1, 1), new DateTime(2030, 1, 31));
+        var result = await Sut(db).GetByPeriodAsync(from, to);
 
         result.Should().ContainSingle();
         result[0].Revenue.Should().Be(100m);
+        result[0].BookingsCount.Should().Be(1);
     }
 
     [Fact]
     public async Task GetByPeriodAsync_ShouldReturnEmptyList_WhenNoBookingsInRange()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var repository = new AnalyticsRepository(db);
+        var repository = Sut(db);
 
-        var result = await repository.GetByPeriodAsync(new DateTime(2030, 1, 1), new DateTime(2030, 1, 31));
+        var result = await repository.GetByPeriodAsync(Utc(2030, 1, 1), Utc(2030, 1, 31));
 
         result.Should().BeEmpty();
     }
@@ -69,53 +74,47 @@ public sealed class AnalyticsRepositoryTests
     public async Task GetTopFavorsAsync_ShouldSumHistoricalPriceAtBooking_NotCurrentFavorPrice()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var favorId = Guid.NewGuid();
-        var from = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
+        var favor = Favor("Projector", 60m);
+        var firstBooking = Booking(Utc(2030, 1, 1, 10), 150m);
+        var secondBooking = Booking(Utc(2030, 1, 2, 10), 150m);
 
-        db.Favors.Add(new FavorEntity { Id = favorId, Name = "Projector", Price = 60m });
-
-        var booking1 = new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = from, To = from.AddHours(2), Price = 150m };
-        var booking2 = new HallBookingEntity
-            { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = from.AddDays(1), To = from.AddDays(1).AddHours(2), Price = 150m };
-        db.Bookings.AddRange(booking1, booking2);
-        db.Set<HallBookingFavorEntity>().AddRange(
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking1.Id, FavorId = favorId, PriceAtBooking = 50m },
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking2.Id, FavorId = favorId, PriceAtBooking = 50m });
+        db.Favors.Add(favor);
+        db.Bookings.AddRange(firstBooking, secondBooking);
+        db.HallBookingFavors.AddRange(
+            BookingFavor(firstBooking, favor, 50m),
+            BookingFavor(secondBooking, favor, 50m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
-
-        var result = await repository.GetTopFavorsAsync(from, from.AddDays(2), 10);
+        var result = await Sut(db).GetTopFavorsAsync(
+            Utc(2030, 1, 1), Utc(2030, 1, 3), 10);
 
         result.Should().ContainSingle();
-        result[0].Id.Should().Be(favorId);
+        result[0].Id.Should().Be(favor.Id);
         result[0].BookingsCount.Should().Be(2);
-        result[0].Revenue.Should().Be(100m, "выручка должна считаться по PriceAtBooking (50+50), а не по текущей цене (60*2=120)");
+        result[0].Revenue.Should().Be(100m,
+            "analytics must use the historical PriceAtBooking, not the favor's current price");
     }
 
     [Fact]
     public async Task GetTopFavorsAsync_ShouldNotSplitFavorAcrossDifferentHistoricalPrices()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var favorId = Guid.NewGuid();
-        var from = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
+        var favor = Favor("Catering", 70m);
+        var firstBooking = Booking(Utc(2030, 1, 1, 10), 150m);
+        var secondBooking = Booking(Utc(2030, 1, 2, 10), 160m);
 
-        db.Favors.Add(new FavorEntity { Id = favorId, Name = "Catering", Price = 70m });
-
-        var booking1 = new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = from, To = from.AddHours(2), Price = 150m };
-        var booking2 = new HallBookingEntity
-            { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = from.AddDays(1), To = from.AddDays(1).AddHours(2), Price = 160m };
-        db.Bookings.AddRange(booking1, booking2);
-        db.Set<HallBookingFavorEntity>().AddRange(
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking1.Id, FavorId = favorId, PriceAtBooking = 50m },
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking2.Id, FavorId = favorId, PriceAtBooking = 60m });
+        db.Favors.Add(favor);
+        db.Bookings.AddRange(firstBooking, secondBooking);
+        db.HallBookingFavors.AddRange(
+            BookingFavor(firstBooking, favor, 50m),
+            BookingFavor(secondBooking, favor, 60m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
+        var result = await Sut(db).GetTopFavorsAsync(
+            Utc(2030, 1, 1), Utc(2030, 1, 3), 10);
 
-        var result = await repository.GetTopFavorsAsync(from, from.AddDays(2), 10);
-
-        result.Should().ContainSingle("услуга не должна распадаться на несколько строк из-за разных исторических цен");
+        result.Should().ContainSingle(
+            "one favor must be aggregated by FavorId regardless of historical price changes");
         result[0].BookingsCount.Should().Be(2);
         result[0].Revenue.Should().Be(110m);
     }
@@ -124,54 +123,109 @@ public sealed class AnalyticsRepositoryTests
     public async Task GetTopFavorsAsync_ShouldOrderByRevenueDescendingAndRespectLimit()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var popularFavor = Guid.NewGuid();
-        var cheapFavor = Guid.NewGuid();
-        var from = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
+        var expensive = Favor("Popular", 100m);
+        var cheap = Favor("Cheap", 10m);
+        var booking = Booking(Utc(2030, 1, 1, 10), 110m);
 
-        db.Favors.AddRange(
-            new FavorEntity { Id = popularFavor, Name = "Popular", Price = 100m },
-            new FavorEntity { Id = cheapFavor, Name = "Cheap", Price = 10m });
-
-        var booking = new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = from, To = from.AddHours(2), Price = 110m };
+        db.Favors.AddRange(expensive, cheap);
         db.Bookings.Add(booking);
-        db.Set<HallBookingFavorEntity>().AddRange(
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking.Id, FavorId = popularFavor, PriceAtBooking = 100m },
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = booking.Id, FavorId = cheapFavor, PriceAtBooking = 10m });
+        db.HallBookingFavors.AddRange(
+            BookingFavor(booking, expensive, 100m),
+            BookingFavor(booking, cheap, 10m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
-
-        var result = await repository.GetTopFavorsAsync(from, from.AddDays(1), 1);
+        var result = await Sut(db).GetTopFavorsAsync(
+            Utc(2030, 1, 1), Utc(2030, 1, 2), 1);
 
         result.Should().ContainSingle();
-        result[0].Id.Should().Be(popularFavor);
+        result[0].Id.Should().Be(expensive.Id);
+        result[0].Revenue.Should().Be(100m);
     }
 
     [Fact]
     public async Task GetTopFavorsAsync_ShouldExcludeFavorsFromBookingsOutsideRange()
     {
         await using var db = DbContextFactory.CreateInMemory();
-        var favorId = Guid.NewGuid();
-        var inRange = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc);
-        var outOfRange = new DateTime(2030, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+        var favor = Favor("Music", 30m);
+        var inRangeBooking = Booking(Utc(2030, 1, 1, 10), 130m);
+        var outOfRangeBooking = Booking(Utc(2030, 3, 1, 10), 130m);
 
-        db.Favors.Add(new FavorEntity { Id = favorId, Name = "Music", Price = 30m });
-
-        var bookingInRange = new HallBookingEntity { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = inRange, To = inRange.AddHours(2), Price = 130m };
-        var bookingOutOfRange = new HallBookingEntity
-            { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), From = outOfRange, To = outOfRange.AddHours(2), Price = 130m };
-        db.Bookings.AddRange(bookingInRange, bookingOutOfRange);
-        db.Set<HallBookingFavorEntity>().AddRange(
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = bookingInRange.Id, FavorId = favorId, PriceAtBooking = 30m },
-            new HallBookingFavorEntity { Id = Guid.NewGuid(), HallBookingId = bookingOutOfRange.Id, FavorId = favorId, PriceAtBooking = 30m });
+        db.Favors.Add(favor);
+        db.Bookings.AddRange(inRangeBooking, outOfRangeBooking);
+        db.HallBookingFavors.AddRange(
+            BookingFavor(inRangeBooking, favor, 30m),
+            BookingFavor(outOfRangeBooking, favor, 30m));
         await db.SaveChangesAsync();
 
-        var repository = new AnalyticsRepository(db);
-
-        var result = await repository.GetTopFavorsAsync(new DateTime(2030, 1, 1), new DateTime(2030, 1, 31), 10);
+        var result = await Sut(db).GetTopFavorsAsync(
+            Utc(2030, 1, 1), Utc(2030, 1, 31), 10);
 
         result.Should().ContainSingle();
         result[0].BookingsCount.Should().Be(1);
         result[0].Revenue.Should().Be(30m);
+    }
+
+    [Fact]
+    public async Task GetTopFavorsAsync_ShouldReturnEmpty_WhenNoBookingsMatchRange()
+    {
+        await using var db = DbContextFactory.CreateInMemory();
+        var favor = Favor("Music", 30m);
+        var booking = Booking(Utc(2030, 3, 1, 10), 130m);
+
+        db.Favors.Add(favor);
+        db.Bookings.Add(booking);
+        db.HallBookingFavors.Add(BookingFavor(booking, favor, 30m));
+        await db.SaveChangesAsync();
+
+        var result = await Sut(db).GetTopFavorsAsync(
+            Utc(2030, 1, 1), Utc(2030, 1, 31), 10);
+
+        result.Should().BeEmpty();
+    }
+
+    private static AnalyticsRepository Sut(AppDbContext db)
+    {
+        return new AnalyticsRepository(db);
+    }
+
+    private static HallBookingEntity Booking(DateTime from, decimal price)
+    {
+        return new HallBookingEntity
+        {
+            Id = Guid.NewGuid(),
+            HallId = Guid.NewGuid(),
+            From = from,
+            To = from.AddHours(2),
+            Price = price
+        };
+    }
+
+    private static FavorEntity Favor(string name, decimal price)
+    {
+        return new FavorEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Price = price
+        };
+    }
+
+    private static HallBookingFavorEntity BookingFavor(
+        HallBookingEntity booking,
+        FavorEntity favor,
+        decimal priceAtBooking)
+    {
+        return new HallBookingFavorEntity
+        {
+            Id = Guid.NewGuid(),
+            HallBookingId = booking.Id,
+            FavorId = favor.Id,
+            PriceAtBooking = priceAtBooking
+        };
+    }
+
+    private static DateTime Utc(int year, int month, int day, int hour = 0)
+    {
+        return new DateTime(year, month, day, hour, 0, 0, DateTimeKind.Utc);
     }
 }

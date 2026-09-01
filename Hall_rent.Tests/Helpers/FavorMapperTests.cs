@@ -46,4 +46,24 @@ public sealed class FavorMapperTests
     {
         FavorMapper.ToResponse([]).Should().BeEmpty();
     }
+
+    [Fact]
+    public void ToEntity_ShouldSnapshotFavorAndBookingPriceAndForeignKeys()
+    {
+        var favor = new FavorEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Projector",
+            Price = 50m
+        };
+        var booking = new HallBookingEntity { Id = Guid.NewGuid() };
+
+        var result = FavorMapper.ToEntity(favor, booking);
+
+        result.HallBookingId.Should().Be(booking.Id);
+        result.Booking.Should().BeSameAs(booking);
+        result.FavorId.Should().Be(favor.Id);
+        result.Favor.Should().BeSameAs(favor);
+        result.PriceAtBooking.Should().Be(50m);
+    }
 }

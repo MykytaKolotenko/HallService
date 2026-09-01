@@ -14,11 +14,15 @@ public class AnalyticsController : ControllerBase
 {
     private readonly IAnalyticsService _analyticsService;
     private readonly IValidator<DateRangeRequest> _dateRangeValidator;
+    private readonly IValidator<AnalyticsTopFavorRequest> _topFavorValidator;
 
-    public AnalyticsController(IAnalyticsService analyticsService, IValidator<DateRangeRequest> dateRangeValidator)
+    public AnalyticsController(IAnalyticsService analyticsService,
+        IValidator<DateRangeRequest> dateRangeValidator,
+        IValidator<AnalyticsTopFavorRequest> topFavorValidator)
     {
         _analyticsService = analyticsService;
         _dateRangeValidator = dateRangeValidator;
+        _topFavorValidator = topFavorValidator;
     }
 
     [HttpGet("revenue")]
@@ -30,10 +34,10 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("favors/top")]
-    public async Task<ActionResult<FavorReportResponse>> GetTopFavors([FromQuery] DateRangeRequest request, [FromQuery] int limit = 10)
+    public async Task<ActionResult<FavorReportResponse>> GetTopFavors([FromQuery] AnalyticsTopFavorRequest request)
     {
-        await ValidatorUtils.Validate(_dateRangeValidator, request);
+        await ValidatorUtils.Validate(_topFavorValidator, request);
 
-        return Ok(await _analyticsService.GetTopFavorsAsync(new DateRangeDto { From = request.From, To = request.To }, limit));
+        return Ok(await _analyticsService.GetTopFavorsAsync(new DateRangeDto { From = request.From, To = request.To }, request.Limit));
     }
 }

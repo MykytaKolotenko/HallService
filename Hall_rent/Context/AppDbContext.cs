@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<HallEntity> Halls { get; set; } = null!;
     public DbSet<HallBookingEntity> Bookings { get; set; } = null!;
     public DbSet<FavorEntity> Favors { get; set; } = null!;
+    public DbSet<HallBookingFavorEntity> HallBookingFavors { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,9 +26,27 @@ public class AppDbContext : DbContext
             builder.Property(x => x.Price).HasPrecision(18, 2);
         });
 
-        modelBuilder.Entity<HallBookingFavorEntity>()
-            .Property(x => x.PriceAtBooking)
-            .HasPrecision(18, 2);
+        modelBuilder.Entity<HallBookingFavorEntity>(builder =>
+        {
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.PriceAtBooking).HasPrecision(18, 2);
+
+            builder
+                .HasOne(x => x.Booking)
+                .WithMany(x => x.Favors)
+                .HasForeignKey(x => x.HallBookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .HasOne(x => x.Favor)
+                .WithMany()
+                .HasForeignKey(x => x.FavorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder
+                .HasIndex(x => new { x.HallBookingId, x.FavorId })
+                .IsUnique();
+        });
 
         modelBuilder.Entity<HallBookingEntity>(builder =>
         {

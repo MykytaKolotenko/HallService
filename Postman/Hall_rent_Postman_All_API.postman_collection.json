@@ -1,0 +1,386 @@
+{
+  "info": {
+    "_postman_id": "7a3ad0c0-bf8b-4d25-8b5d-7b1bb0f8e9a01",
+    "name": "Hall Rent - All API Smoke Tests",
+    "description": "One-click Postman collection for all Hall Rent API endpoints. Run the collection in Collection Runner; requests are chained with collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5226"
+    },
+    {
+      "key": "runInitialized",
+      "value": ""
+    },
+    {
+      "key": "favorId",
+      "value": ""
+    },
+    {
+      "key": "hallId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "favorName",
+      "value": ""
+    },
+    {
+      "key": "hallName",
+      "value": ""
+    },
+    {
+      "key": "from",
+      "value": ""
+    },
+    {
+      "key": "to",
+      "value": ""
+    },
+    {
+      "key": "analyticsFrom",
+      "value": ""
+    },
+    {
+      "key": "analyticsTo",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Favor",
+      "item": [
+        {
+          "name": "Create favor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{favorName}}\",\n  \"price\": 150\n}"
+            },
+            "url": "{{baseUrl}}/Favor"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function iso(d) { return d.toISOString().slice(0, 19); }",
+                  "const now = new Date();",
+                  "const from = new Date(now.getTime() + 24 * 60 * 60 * 1000);",
+                  "const to = new Date(from.getTime() + 2 * 60 * 60 * 1000);",
+                  "const analyticsFrom = new Date(from.getTime() - 60 * 60 * 1000);",
+                  "const analyticsTo = new Date(to.getTime() + 60 * 60 * 1000);",
+                  "const suffix = now.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);",
+                  "pm.collectionVariables.set('runInitialized', 'true');",
+                  "pm.collectionVariables.set('favorId', '');",
+                  "pm.collectionVariables.set('hallId', '');",
+                  "pm.collectionVariables.set('bookingId', '');",
+                  "pm.collectionVariables.set('favorName', 'Postman Favor ' + suffix);",
+                  "pm.collectionVariables.set('hallName', 'Postman Hall ' + suffix);",
+                  "pm.collectionVariables.set('from', iso(from));",
+                  "pm.collectionVariables.set('to', iso(to));",
+                  "pm.collectionVariables.set('analyticsFrom', iso(analyticsFrom));",
+                  "pm.collectionVariables.set('analyticsTo', iso(analyticsTo));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Response contains favor id', function () { pm.expect(json.id).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('favorId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get favors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/Favor"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Created favor is present', function () { pm.expect(JSON.stringify(json)).to.include(pm.collectionVariables.get('favorId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update favor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{favorId}}\",\n  \"name\": \"{{favorName}} Updated\",\n  \"price\": 175\n}"
+            },
+            "url": "{{baseUrl}}/Favor/{{favorId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Hall",
+      "item": [
+        {
+          "name": "Create hall with created favor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{hallName}}\",\n  \"persons\": 100,\n  \"price\": 1000,\n  \"favors\": [\"{{favorId}}\"]\n}"
+            },
+            "url": "{{baseUrl}}/Hall"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Response contains hall id', function () { pm.expect(json.id).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('hallId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search available halls",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/Hall/search?from={{from}}&to={{to}}&persons=50"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Created hall is available', function () { pm.expect(json.halls).to.include(pm.collectionVariables.get('hallId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update hall",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{hallName}} Updated\",\n  \"persons\": 120,\n  \"price\": 1200,\n  \"favors\": [\"{{favorId}}\"]\n}"
+            },
+            "url": "{{baseUrl}}/Hall/{{hallId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Updated hall id matches', function () { pm.expect(json.id).to.eql(pm.collectionVariables.get('hallId')); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Booking",
+      "item": [
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"favors\": [\"{{favorId}}\"],\n  \"persons\": 50,\n  \"from\": \"{{from}}\",\n  \"to\": \"{{to}}\"\n}"
+            },
+            "url": "{{baseUrl}}/Booking/{{hallId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Booking id exists', function () { pm.expect(json.id).to.be.a('string').and.not.empty; });",
+                  "pm.test('Booking price is 1375', function () { pm.expect(Number(json.price)).to.eql(1375); });",
+                  "pm.collectionVariables.set('bookingId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject overlapping booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"favors\": [],\n  \"persons\": 50,\n  \"from\": \"{{from}}\",\n  \"to\": \"{{to}}\"\n}"
+            },
+            "url": "{{baseUrl}}/Booking/{{hallId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Analytics",
+      "item": [
+        {
+          "name": "Revenue report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/analytics/revenue?from={{analyticsFrom}}&to={{analyticsTo}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Revenue contains booking', function () { pm.expect(Number(json.totalBookings)).to.be.at.least(1); });",
+                  "pm.test('Revenue is at least booking price', function () { pm.expect(Number(json.totalRevenue)).to.be.at.least(1375); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Top favors report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/analytics/favors/top?from={{analyticsFrom}}&to={{analyticsTo}}&limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Favor analytics contains created favor', function () { pm.expect(JSON.stringify(json)).to.include(pm.collectionVariables.get('favorId')); });",
+                  "pm.test('Favor report has at least one item', function () { pm.expect(json.favors.length).to.be.greaterThan(0); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Cleanup",
+      "item": [
+        {
+          "name": "Delete created hall",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/Hall/{{hallId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
